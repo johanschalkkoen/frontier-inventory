@@ -72,6 +72,9 @@ function defaultState(): GameState {
     totalXp: 0,
     completedMissions: [],
     selectedRegionId: null,
+    characterName: 'Outlaw',
+    archetypeId: 'jace',
+    traitPoints: {},
   };
 }
 
