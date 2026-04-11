@@ -1,5 +1,5 @@
 import { useGame } from '@/context/GameContext';
-import { propertyDatabase, propertyAddOns, type PropertyAddOn } from '@/data/horseData';
+import { propertyDatabase, propertyAddOns } from '@/data/horseData';
 import { toast } from 'sonner';
 
 export function PropertySection() {

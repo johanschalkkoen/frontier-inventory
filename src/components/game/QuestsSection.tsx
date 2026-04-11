@@ -52,7 +52,7 @@ export function QuestsSection() {
             <h3 className="text-primary font-bold text-[10px] mt-3 mb-2">COMPLETED</h3>
             {completedMissions.slice(0, 10).map(m => (
               <div key={m.id} className="bg-game-slot/30 p-2 mb-1 border border-game-slot-border/20 opacity-60">
-                <span className="text-rarity-advanced text-xs">✓ {m.title}</span>
+                <span className="text-rarity-advanced text-xs">✓ {m.name}</span>
                 <span className="text-muted-foreground text-[9px] block">{m.regionName}</span>
               </div>
             ))}
