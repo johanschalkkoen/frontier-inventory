@@ -2,7 +2,7 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { GameProvider, useGame } from '@/context/GameContext';
 import { TopMenuBar } from '@/components/game/TopMenuBar';
 import { CharacterSection } from '@/components/game/CharacterSection';
-import { InventoryBag } from '@/components/game/InventoryBag';
+// InventoryBag now only used in InventorySection
 import { InventorySection } from '@/components/game/InventorySection';
 import { WorldMap } from '@/components/game/WorldMap';
 import { LoginPage } from '@/pages/Login';
