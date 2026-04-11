@@ -38,7 +38,7 @@ function getQuestStory(missionId: string, mission: Mission) {
   };
 }
 
-function getQuestRisk(mission: Mission): { label: string; color: string; energyCost: number; healthRisk: number } {
+function getQuestRiskLevel(mission: Mission): { label: string; color: string; energyCost: number; healthRisk: number } {
   const level = mission.levelRequired;
   const encounters = mission.encounters?.length || 0;
   if (level >= 50 || encounters >= 5) return { label: 'EXTREME', color: 'text-destructive', energyCost: 40, healthRisk: 35 };
