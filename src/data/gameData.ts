@@ -22,8 +22,12 @@ import pocketwatchImg from '@/assets/items/pocketwatch.jpg';
 import vestImg from '@/assets/items/vest.jpg';
 import dynamiteImg from '@/assets/items/dynamite.jpg';
 
+// Equipment slots (wearable)
 export type SlotType = 'hat' | 'bandana' | 'shirt' | 'outerwear' | 'gloves' | 'sidearm' | 'longarm' | 'gunbelt' | 'pants' | 'boots' | 'knife' | 'rope' | 'canteen' | 'tobacco' | 'special';
 export type Rarity = 'basic' | 'advanced' | 'rare' | 'epic' | 'legendary';
+
+// Shop categories for organizing items
+export type ItemCategory = 'clothing' | 'weapon' | 'ammo' | 'food' | 'drink' | 'edc' | 'medicine' | 'luxury' | 'valuable';
 
 export interface ItemStats {
   health?: number;
@@ -41,11 +45,14 @@ export interface GameItem {
   id: string;
   type: SlotType;
   rarity: Rarity;
+  category: ItemCategory;
   name: string;
   img: string;
   stats: ItemStats;
   value: number;
   levelRequired: number;
+  consumable?: boolean; // true = removed after use
+  stackable?: boolean; // true = can own multiples
 }
 
 export const STANDARD_STATS: Record<string, number> = {
@@ -53,79 +60,154 @@ export const STANDARD_STATS: Record<string, number> = {
 };
 
 export const itemDatabase: GameItem[] = [
-  // Coins & Valuables (prices +70%)
-  { id: 'item-0', type: 'special', rarity: 'rare', name: 'Gold Coin', img: coinImg, stats: {}, value: 34, levelRequired: 1 },
-  { id: 'item-1', type: 'special', rarity: 'advanced', name: 'Silver Dollar', img: coinImg, stats: {}, value: 9, levelRequired: 1 },
-  { id: 'item-2', type: 'special', rarity: 'basic', name: 'Copper Cent', img: coinImg, stats: {}, value: 2, levelRequired: 1 },
-  { id: 'item-20', type: 'special', rarity: 'legendary', name: 'Gold Pocket Watch', img: pocketwatchImg, stats: { speed: 5, luck: 10 }, value: 128, levelRequired: 8 },
-  { id: 'item-21', type: 'special', rarity: 'rare', name: 'Gold Coin', img: coinImg, stats: {}, value: 34, levelRequired: 1 },
-  { id: 'item-22', type: 'special', rarity: 'advanced', name: 'Silver Dollar', img: coinImg, stats: {}, value: 9, levelRequired: 1 },
-
+  // =================== CLOTHING & APPAREL ===================
   // Hats
-  { id: 'item-3', type: 'hat', rarity: 'basic', name: 'Stetson', img: hatImg, stats: { defense: 5 }, value: 12, levelRequired: 1 },
-  { id: 'item-10', type: 'hat', rarity: 'epic', name: 'Black Gunslinger Hat', img: hat2Img, stats: { defense: 12, damage: 5, charisma: 8 }, value: 340, levelRequired: 6 },
+  { id: 'item-3', type: 'hat', rarity: 'basic', category: 'clothing', name: 'Stetson', img: hatImg, stats: { defense: 5 }, value: 12, levelRequired: 1 },
+  { id: 'item-30', type: 'hat', rarity: 'rare', category: 'clothing', name: 'Cavalry Kepi', img: hatImg, stats: { defense: 8, charisma: 5 }, value: 153, levelRequired: 4 },
+  { id: 'item-10', type: 'hat', rarity: 'epic', category: 'clothing', name: 'Black Gunslinger Hat', img: hat2Img, stats: { defense: 12, damage: 5, charisma: 8 }, value: 340, levelRequired: 6 },
+  { id: 'item-31', type: 'hat', rarity: 'legendary', category: 'clothing', name: 'Golden Crown Hat', img: hat2Img, stats: { defense: 20, charisma: 15, luck: 10 }, value: 1020, levelRequired: 12 },
+  { id: 'item-60', type: 'hat', rarity: 'advanced', category: 'clothing', name: 'Boss of Plains Hat', img: hatImg, stats: { defense: 6, charisma: 3 }, value: 42, levelRequired: 2 },
 
+  // Bandanas/Masks
+  { id: 'item-7', type: 'bandana', rarity: 'basic', category: 'clothing', name: 'Red Bandana', img: bandanaImg, stats: { defense: 2, charisma: -5 }, value: 3, levelRequired: 1 },
+  { id: 'item-61', type: 'bandana', rarity: 'basic', category: 'clothing', name: 'Wild Rag', img: bandanaImg, stats: { defense: 2, energy: 3 }, value: 5, levelRequired: 1 },
+  { id: 'item-43', type: 'bandana', rarity: 'rare', category: 'clothing', name: 'Black Outlaw Mask', img: bandanaImg, stats: { defense: 5, charisma: -8, luck: 10 }, value: 85, levelRequired: 4 },
+  { id: 'item-44', type: 'bandana', rarity: 'epic', category: 'clothing', name: 'Spirit Mask', img: bandanaImg, stats: { defense: 10, luck: 15, charisma: 5 }, value: 340, levelRequired: 9 },
+
+  // Shirts & Vests
+  { id: 'item-13', type: 'shirt', rarity: 'basic', category: 'clothing', name: 'Cotton Work Shirt', img: shirtImg, stats: { defense: 2 }, value: 5, levelRequired: 1 },
+  { id: 'item-62', type: 'shirt', rarity: 'basic', category: 'clothing', name: 'Wool Henley', img: shirtImg, stats: { defense: 3, energy: 2 }, value: 8, levelRequired: 1 },
+  { id: 'item-63', type: 'shirt', rarity: 'advanced', category: 'clothing', name: 'Vest with Pockets', img: vestImg, stats: { defense: 5, luck: 3 }, value: 34, levelRequired: 2 },
+  { id: 'item-14', type: 'shirt', rarity: 'rare', category: 'clothing', name: 'Sheriff Vest', img: vestImg, stats: { defense: 10, health: 15, charisma: 10 }, value: 204, levelRequired: 5 },
+  { id: 'item-35', type: 'shirt', rarity: 'epic', category: 'clothing', name: 'Reinforced Leather Shirt', img: shirtImg, stats: { defense: 15, health: 20 }, value: 340, levelRequired: 7 },
+
+  // Outerwear
+  { id: 'item-64', type: 'outerwear', rarity: 'basic', category: 'clothing', name: 'Oilskin Slicker', img: coatImg, stats: { defense: 4, energy: 3 }, value: 14, levelRequired: 1 },
+  { id: 'item-65', type: 'outerwear', rarity: 'advanced', category: 'clothing', name: 'Wool Duster', img: coatImg, stats: { defense: 8, speed: -1 }, value: 51, levelRequired: 3 },
+  { id: 'item-15', type: 'outerwear', rarity: 'epic', category: 'clothing', name: 'Leather Duster', img: coatImg, stats: { defense: 18, speed: -3, charisma: 5 }, value: 425, levelRequired: 7 },
+  { id: 'item-40', type: 'outerwear', rarity: 'legendary', category: 'clothing', name: "Marshal's Longcoat", img: coatImg, stats: { defense: 25, charisma: 15, health: 20 }, value: 935, levelRequired: 13 },
+
+  // Pants & Chaps
+  { id: 'item-16', type: 'pants', rarity: 'basic', category: 'clothing', name: 'Denim Jeans', img: pantsImg, stats: { defense: 3 }, value: 7, levelRequired: 1 },
+  { id: 'item-66', type: 'pants', rarity: 'basic', category: 'clothing', name: 'Canvas Trousers', img: pantsImg, stats: { defense: 2, speed: 1 }, value: 6, levelRequired: 1 },
+  { id: 'item-36', type: 'pants', rarity: 'rare', category: 'clothing', name: 'Chaps', img: pantsImg, stats: { defense: 8, speed: 3 }, value: 136, levelRequired: 5 },
+  { id: 'item-37', type: 'pants', rarity: 'epic', category: 'clothing', name: 'Armored Trousers', img: pantsImg, stats: { defense: 14, speed: -2 }, value: 306, levelRequired: 8 },
+  { id: 'item-67', type: 'pants', rarity: 'advanced', category: 'clothing', name: 'Wool Trousers', img: pantsImg, stats: { defense: 5, charisma: 3 }, value: 26, levelRequired: 2 },
+
+  // Boots
+  { id: 'item-68', type: 'boots', rarity: 'basic', category: 'clothing', name: 'Work Boots', img: bootsImg, stats: { speed: 3, defense: 2 }, value: 10, levelRequired: 1 },
+  { id: 'item-17', type: 'boots', rarity: 'advanced', category: 'clothing', name: 'Spurred Boots', img: bootsImg, stats: { speed: 8, defense: 4 }, value: 51, levelRequired: 3 },
+  { id: 'item-38', type: 'boots', rarity: 'rare', category: 'clothing', name: 'Snakeskin Boots', img: bootsImg, stats: { speed: 12, luck: 5, defense: 3 }, value: 187, levelRequired: 6 },
+  { id: 'item-39', type: 'boots', rarity: 'legendary', category: 'clothing', name: 'Ironclad Boots', img: bootsImg, stats: { defense: 15, speed: 5, damage: 5 }, value: 680, levelRequired: 11 },
+
+  // Gloves
+  { id: 'item-69', type: 'gloves', rarity: 'basic', category: 'clothing', name: 'Work Gloves', img: glovesImg, stats: { defense: 1 }, value: 4, levelRequired: 1 },
+  { id: 'item-18', type: 'gloves', rarity: 'advanced', category: 'clothing', name: 'Leather Riding Gloves', img: glovesImg, stats: { damage: 3, defense: 3 }, value: 34, levelRequired: 2 },
+  { id: 'item-41', type: 'gloves', rarity: 'rare', category: 'clothing', name: 'Gunfighter Gloves', img: glovesImg, stats: { damage: 8, speed: 5 }, value: 119, levelRequired: 5 },
+  { id: 'item-42', type: 'gloves', rarity: 'legendary', category: 'clothing', name: 'Deadeye Gauntlets', img: glovesImg, stats: { damage: 15, speed: 8, luck: 10 }, value: 765, levelRequired: 11 },
+
+  // =================== WEAPONS ===================
   // Sidearms
-  { id: 'item-4', type: 'sidearm', rarity: 'legendary', name: 'Colt Peacemaker', img: sidearmImg, stats: { damage: 45, speed: 5 }, value: 850, levelRequired: 10 },
-  { id: 'item-11', type: 'sidearm', rarity: 'advanced', name: 'Derringer', img: derringerImg, stats: { damage: 15, speed: 8 }, value: 68, levelRequired: 3 },
+  { id: 'item-70', type: 'sidearm', rarity: 'basic', category: 'weapon', name: 'Percussion Revolver', img: sidearmImg, stats: { damage: 8, speed: 3 }, value: 22, levelRequired: 1 },
+  { id: 'item-11', type: 'sidearm', rarity: 'advanced', category: 'weapon', name: 'Derringer', img: derringerImg, stats: { damage: 15, speed: 8 }, value: 68, levelRequired: 3 },
+  { id: 'item-71', type: 'sidearm', rarity: 'advanced', category: 'weapon', name: 'Colt Navy Revolver', img: sidearmImg, stats: { damage: 18, speed: 5 }, value: 85, levelRequired: 3 },
+  { id: 'item-32', type: 'sidearm', rarity: 'rare', category: 'weapon', name: 'Schofield Revolver', img: sidearmImg, stats: { damage: 30, speed: 3 }, value: 272, levelRequired: 6 },
+  { id: 'item-4', type: 'sidearm', rarity: 'legendary', category: 'weapon', name: 'Colt Peacemaker', img: sidearmImg, stats: { damage: 45, speed: 5 }, value: 850, levelRequired: 10 },
 
   // Longarms
-  { id: 'item-5', type: 'longarm', rarity: 'epic', name: 'Winchester 1873', img: longarmImg, stats: { damage: 60, speed: -5 }, value: 510, levelRequired: 8 },
-  { id: 'item-12', type: 'longarm', rarity: 'rare', name: 'Double-Barrel Shotgun', img: shotgunImg, stats: { damage: 40, speed: -3 }, value: 255, levelRequired: 5 },
+  { id: 'item-72', type: 'longarm', rarity: 'basic', category: 'weapon', name: 'Single-Shot Carbine', img: longarmImg, stats: { damage: 18, speed: -4 }, value: 34, levelRequired: 1 },
+  { id: 'item-73', type: 'longarm', rarity: 'advanced', category: 'weapon', name: 'Henry Repeater', img: longarmImg, stats: { damage: 32, speed: -3 }, value: 136, levelRequired: 4 },
+  { id: 'item-12', type: 'longarm', rarity: 'rare', category: 'weapon', name: 'Double-Barrel Shotgun', img: shotgunImg, stats: { damage: 40, speed: -3 }, value: 255, levelRequired: 5 },
+  { id: 'item-74', type: 'longarm', rarity: 'rare', category: 'weapon', name: 'Sawed-Off Shotgun', img: shotgunImg, stats: { damage: 35, speed: 2 }, value: 204, levelRequired: 5 },
+  { id: 'item-5', type: 'longarm', rarity: 'epic', category: 'weapon', name: 'Winchester 1873', img: longarmImg, stats: { damage: 60, speed: -5 }, value: 510, levelRequired: 8 },
+  { id: 'item-33', type: 'longarm', rarity: 'legendary', category: 'weapon', name: 'Sharps Buffalo Rifle', img: longarmImg, stats: { damage: 80, speed: -8, luck: 5 }, value: 1190, levelRequired: 12 },
 
-  // Clothing
-  { id: 'item-13', type: 'shirt', rarity: 'basic', name: 'Cotton Shirt', img: shirtImg, stats: { defense: 2 }, value: 5, levelRequired: 1 },
-  { id: 'item-14', type: 'shirt', rarity: 'rare', name: 'Sheriff Vest', img: vestImg, stats: { defense: 10, health: 15, charisma: 10 }, value: 204, levelRequired: 5 },
-  { id: 'item-15', type: 'outerwear', rarity: 'epic', name: 'Leather Duster', img: coatImg, stats: { defense: 18, speed: -3, charisma: 5 }, value: 425, levelRequired: 7 },
-  { id: 'item-16', type: 'pants', rarity: 'basic', name: 'Denim Jeans', img: pantsImg, stats: { defense: 3 }, value: 7, levelRequired: 1 },
-  { id: 'item-17', type: 'boots', rarity: 'advanced', name: 'Spurred Boots', img: bootsImg, stats: { speed: 8, defense: 4 }, value: 51, levelRequired: 3 },
-  { id: 'item-7', type: 'bandana', rarity: 'basic', name: 'Red Bandana', img: bandanaImg, stats: { defense: 2, charisma: -5 }, value: 3, levelRequired: 1 },
+  // Knives
+  { id: 'item-75', type: 'knife', rarity: 'basic', category: 'weapon', name: 'Folding Knife', img: knifeImg, stats: { damage: 8, speed: 2 }, value: 6, levelRequired: 1 },
+  { id: 'item-76', type: 'knife', rarity: 'advanced', category: 'weapon', name: 'Sheath Knife', img: knifeImg, stats: { damage: 15, speed: 3 }, value: 34, levelRequired: 2 },
+  { id: 'item-8', type: 'knife', rarity: 'rare', category: 'weapon', name: 'Bowie Knife', img: knifeImg, stats: { damage: 25, speed: 3 }, value: 170, levelRequired: 4 },
+  { id: 'item-34', type: 'knife', rarity: 'epic', category: 'weapon', name: 'Damascus Steel Blade', img: knifeImg, stats: { damage: 40, speed: 5 }, value: 425, levelRequired: 9 },
 
-  // Gear
-  { id: 'item-18', type: 'gloves', rarity: 'advanced', name: 'Leather Gloves', img: glovesImg, stats: { damage: 3, defense: 3 }, value: 34, levelRequired: 2 },
-  { id: 'item-19', type: 'gunbelt', rarity: 'rare', name: 'Bullet Belt', img: gunbeltImg, stats: { damage: 8, defense: 5 }, value: 136, levelRequired: 4 },
+  // Gun Belts
+  { id: 'item-77', type: 'gunbelt', rarity: 'basic', category: 'weapon', name: 'Plain Leather Belt', img: gunbeltImg, stats: { damage: 2, defense: 1 }, value: 8, levelRequired: 1 },
+  { id: 'item-19', type: 'gunbelt', rarity: 'rare', category: 'weapon', name: 'Bullet Belt', img: gunbeltImg, stats: { damage: 8, defense: 5 }, value: 136, levelRequired: 4 },
+  { id: 'item-45', type: 'gunbelt', rarity: 'epic', category: 'weapon', name: 'Desperado Belt', img: gunbeltImg, stats: { damage: 12, defense: 8, speed: 3 }, value: 374, levelRequired: 7 },
+  { id: 'item-46', type: 'gunbelt', rarity: 'legendary', category: 'weapon', name: "Warlord's Bandolier", img: gunbeltImg, stats: { damage: 20, defense: 12, speed: 5 }, value: 1020, levelRequired: 13 },
 
-  // Accessories
-  { id: 'item-8', type: 'knife', rarity: 'rare', name: 'Bowie Knife', img: knifeImg, stats: { damage: 25, speed: 3 }, value: 170, levelRequired: 4 },
-  { id: 'item-23', type: 'rope', rarity: 'advanced', name: 'Lasso', img: ropeImg, stats: { speed: 5, luck: 5 }, value: 26, levelRequired: 2 },
-  { id: 'item-9', type: 'canteen', rarity: 'basic', name: 'Tin Canteen', img: canteenImg, stats: { thirst: 40 }, value: 4, levelRequired: 1 },
-  { id: 'item-24', type: 'tobacco', rarity: 'basic', name: 'Pipe & Tobacco', img: tobaccoImg, stats: { energy: 15, sleep: -10, charisma: 3 }, value: 3, levelRequired: 1 },
+  // Ammo (consumable/stackable)
+  { id: 'item-80', type: 'special', rarity: 'basic', category: 'ammo', name: 'Revolver Cartridges (12)', img: sidearmImg, stats: { damage: 2 }, value: 3, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-81', type: 'special', rarity: 'basic', category: 'ammo', name: 'Rifle Rounds (10)', img: longarmImg, stats: { damage: 3 }, value: 5, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-82', type: 'special', rarity: 'basic', category: 'ammo', name: 'Shotgun Shells (8)', img: shotgunImg, stats: { damage: 4 }, value: 4, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-83', type: 'special', rarity: 'advanced', category: 'ammo', name: 'Silver Bullets (6)', img: sidearmImg, stats: { damage: 8, luck: 3 }, value: 26, levelRequired: 4, consumable: true, stackable: true },
+  { id: 'item-84', type: 'special', rarity: 'rare', category: 'ammo', name: 'Explosive Rounds (4)', img: dynamiteImg, stats: { damage: 15 }, value: 68, levelRequired: 7, consumable: true, stackable: true },
 
-  // Specials
-  { id: 'item-6', type: 'special', rarity: 'rare', name: 'Western Saddle', img: saddleImg, stats: { speed: 10 }, value: 119, levelRequired: 3 },
-  { id: 'item-25', type: 'special', rarity: 'epic', name: 'Dynamite', img: dynamiteImg, stats: { damage: 35 }, value: 255, levelRequired: 6 },
-  { id: 'item-26', type: 'special', rarity: 'advanced', name: 'Whiskey Bottle', img: whiskeyImg, stats: { health: -10, energy: 25, damage: 5, charisma: 8 }, value: 6, levelRequired: 1 },
+  // =================== FOOD & DRINK ===================
+  // Food
+  { id: 'item-90', type: 'special', rarity: 'basic', category: 'food', name: 'Beef Jerky', img: tobaccoImg, stats: { energy: 15, health: 5 }, value: 2, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-91', type: 'special', rarity: 'basic', category: 'food', name: 'Hardtack Biscuits', img: tobaccoImg, stats: { energy: 10 }, value: 1, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-92', type: 'special', rarity: 'basic', category: 'food', name: 'Dry Beans (1 lb)', img: tobaccoImg, stats: { energy: 20, health: 5 }, value: 2, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-93', type: 'special', rarity: 'basic', category: 'food', name: 'Bacon / Salt Pork', img: tobaccoImg, stats: { energy: 25, health: 10 }, value: 4, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-94', type: 'special', rarity: 'basic', category: 'food', name: 'Coffee (ground)', img: canteenImg, stats: { energy: 30, sleep: -15 }, value: 3, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-95', type: 'special', rarity: 'basic', category: 'food', name: 'Dried Fruit', img: tobaccoImg, stats: { energy: 12, health: 8 }, value: 3, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-96', type: 'special', rarity: 'advanced', category: 'food', name: 'Pemmican', img: tobaccoImg, stats: { energy: 35, health: 15 }, value: 8, levelRequired: 2, consumable: true, stackable: true },
+  { id: 'item-97', type: 'special', rarity: 'basic', category: 'food', name: 'Canned Peaches', img: canteenImg, stats: { energy: 18, health: 10, thirst: 5 }, value: 4, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-98', type: 'special', rarity: 'basic', category: 'food', name: 'Flour & Cornmeal', img: tobaccoImg, stats: { energy: 15 }, value: 3, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-99', type: 'special', rarity: 'advanced', category: 'food', name: 'Saloon Steak Dinner', img: tobaccoImg, stats: { energy: 50, health: 25, charisma: 3 }, value: 14, levelRequired: 1, consumable: true },
 
-  // More hats
-  { id: 'item-30', type: 'hat', rarity: 'rare', name: 'Cavalry Kepi', img: hatImg, stats: { defense: 8, charisma: 5 }, value: 153, levelRequired: 4 },
-  { id: 'item-31', type: 'hat', rarity: 'legendary', name: 'Golden Crown Hat', img: hat2Img, stats: { defense: 20, charisma: 15, luck: 10 }, value: 1020, levelRequired: 12 },
+  // Drinks
+  { id: 'item-26', type: 'special', rarity: 'advanced', category: 'drink', name: 'Whiskey Bottle', img: whiskeyImg, stats: { health: -10, energy: 25, damage: 5, charisma: 8 }, value: 6, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-100', type: 'special', rarity: 'basic', category: 'drink', name: 'Beer (warm)', img: whiskeyImg, stats: { energy: 10, thirst: 15, charisma: 2 }, value: 2, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-101', type: 'special', rarity: 'basic', category: 'drink', name: 'Strong Black Coffee', img: canteenImg, stats: { energy: 30, sleep: -20, speed: 2 }, value: 1, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-102', type: 'special', rarity: 'advanced', category: 'drink', name: 'Sarsaparilla', img: canteenImg, stats: { thirst: 30, energy: 10, health: 5 }, value: 4, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-103', type: 'special', rarity: 'rare', category: 'drink', name: 'Fine Brandy', img: whiskeyImg, stats: { energy: 35, charisma: 12, health: -5 }, value: 34, levelRequired: 4, consumable: true },
+  { id: 'item-104', type: 'special', rarity: 'basic', category: 'drink', name: 'Moonshine', img: whiskeyImg, stats: { damage: 8, charisma: 5, health: -15, energy: 20 }, value: 3, levelRequired: 1, consumable: true, stackable: true },
 
-  // More weapons
-  { id: 'item-32', type: 'sidearm', rarity: 'rare', name: 'Schofield Revolver', img: sidearmImg, stats: { damage: 30, speed: 3 }, value: 272, levelRequired: 6 },
-  { id: 'item-33', type: 'longarm', rarity: 'legendary', name: 'Sharps Buffalo Rifle', img: longarmImg, stats: { damage: 80, speed: -8, luck: 5 }, value: 1190, levelRequired: 12 },
-  { id: 'item-34', type: 'knife', rarity: 'epic', name: 'Damascus Steel Blade', img: knifeImg, stats: { damage: 40, speed: 5 }, value: 425, levelRequired: 9 },
+  // =================== EDC & SURVIVAL GEAR ===================
+  { id: 'item-23', type: 'rope', rarity: 'advanced', category: 'edc', name: 'Lasso (40ft)', img: ropeImg, stats: { speed: 5, luck: 5 }, value: 26, levelRequired: 2 },
+  { id: 'item-47', type: 'rope', rarity: 'rare', category: 'edc', name: 'Reinforced Lasso', img: ropeImg, stats: { speed: 8, luck: 8 }, value: 102, levelRequired: 5 },
+  { id: 'item-9', type: 'canteen', rarity: 'basic', category: 'edc', name: 'Tin Canteen', img: canteenImg, stats: { thirst: 40 }, value: 4, levelRequired: 1 },
+  { id: 'item-48', type: 'canteen', rarity: 'rare', category: 'edc', name: 'Silver Canteen', img: canteenImg, stats: { thirst: 60, energy: 10 }, value: 85, levelRequired: 4 },
+  { id: 'item-49', type: 'canteen', rarity: 'epic', category: 'edc', name: 'Enchanted Flask', img: canteenImg, stats: { thirst: 80, health: 20, energy: 15 }, value: 340, levelRequired: 9 },
+  { id: 'item-24', type: 'tobacco', rarity: 'basic', category: 'edc', name: 'Pipe & Tobacco', img: tobaccoImg, stats: { energy: 15, sleep: -10, charisma: 3 }, value: 3, levelRequired: 1 },
+  { id: 'item-50', type: 'tobacco', rarity: 'rare', category: 'edc', name: 'Fine Cigars', img: tobaccoImg, stats: { energy: 25, charisma: 10, sleep: -5 }, value: 9, levelRequired: 4 },
 
-  // More clothing
-  { id: 'item-35', type: 'shirt', rarity: 'epic', name: 'Reinforced Leather Shirt', img: shirtImg, stats: { defense: 15, health: 20 }, value: 340, levelRequired: 7 },
-  { id: 'item-36', type: 'pants', rarity: 'rare', name: 'Chaps', img: pantsImg, stats: { defense: 8, speed: 3 }, value: 136, levelRequired: 5 },
-  { id: 'item-37', type: 'pants', rarity: 'epic', name: 'Armored Trousers', img: pantsImg, stats: { defense: 14, speed: -2 }, value: 306, levelRequired: 8 },
-  { id: 'item-38', type: 'boots', rarity: 'rare', name: 'Snakeskin Boots', img: bootsImg, stats: { speed: 12, luck: 5, defense: 3 }, value: 187, levelRequired: 6 },
-  { id: 'item-39', type: 'boots', rarity: 'legendary', name: 'Ironclad Boots', img: bootsImg, stats: { defense: 15, speed: 5, damage: 5 }, value: 680, levelRequired: 11 },
-  { id: 'item-40', type: 'outerwear', rarity: 'legendary', name: "Marshal's Longcoat", img: coatImg, stats: { defense: 25, charisma: 15, health: 20 }, value: 935, levelRequired: 13 },
-  { id: 'item-41', type: 'gloves', rarity: 'rare', name: 'Gunfighter Gloves', img: glovesImg, stats: { damage: 8, speed: 5 }, value: 119, levelRequired: 5 },
-  { id: 'item-42', type: 'gloves', rarity: 'legendary', name: 'Deadeye Gauntlets', img: glovesImg, stats: { damage: 15, speed: 8, luck: 10 }, value: 765, levelRequired: 11 },
-  { id: 'item-43', type: 'bandana', rarity: 'rare', name: 'Black Outlaw Mask', img: bandanaImg, stats: { defense: 5, charisma: -8, luck: 10 }, value: 85, levelRequired: 4 },
-  { id: 'item-44', type: 'bandana', rarity: 'epic', name: 'Spirit Mask', img: bandanaImg, stats: { defense: 10, luck: 15, charisma: 5 }, value: 340, levelRequired: 9 },
+  { id: 'item-110', type: 'special', rarity: 'basic', category: 'edc', name: 'Bedroll & Tarp', img: saddleImg, stats: { sleep: 30, energy: 10 }, value: 8, levelRequired: 1 },
+  { id: 'item-111', type: 'special', rarity: 'basic', category: 'edc', name: 'Match Safe & Flint', img: pocketwatchImg, stats: { luck: 2 }, value: 2, levelRequired: 1 },
+  { id: 'item-112', type: 'special', rarity: 'basic', category: 'edc', name: 'Sewing Kit', img: pocketwatchImg, stats: {}, value: 2, levelRequired: 1 },
+  { id: 'item-113', type: 'special', rarity: 'basic', category: 'edc', name: 'Whetstone', img: knifeImg, stats: { damage: 2 }, value: 2, levelRequired: 1 },
+  { id: 'item-114', type: 'special', rarity: 'basic', category: 'edc', name: 'Soap, Comb & Towel', img: pocketwatchImg, stats: { charisma: 2 }, value: 2, levelRequired: 1 },
+  { id: 'item-115', type: 'special', rarity: 'basic', category: 'edc', name: 'Tin Cup & Frying Pan', img: canteenImg, stats: { energy: 5 }, value: 4, levelRequired: 1 },
+  { id: 'item-116', type: 'special', rarity: 'basic', category: 'edc', name: 'Piggin Strings (6)', img: ropeImg, stats: {}, value: 2, levelRequired: 1 },
+  { id: 'item-117', type: 'special', rarity: 'advanced', category: 'edc', name: 'Lantern', img: pocketwatchImg, stats: { luck: 3, speed: 2 }, value: 14, levelRequired: 2 },
+  { id: 'item-118', type: 'special', rarity: 'advanced', category: 'edc', name: 'Compass', img: pocketwatchImg, stats: { luck: 5, speed: 3 }, value: 22, levelRequired: 2 },
+  { id: 'item-119', type: 'special', rarity: 'basic', category: 'edc', name: 'Long Johns / Union Suit', img: shirtImg, stats: { defense: 1, energy: 3 }, value: 4, levelRequired: 1 },
+  { id: 'item-120', type: 'special', rarity: 'basic', category: 'edc', name: 'Suspenders', img: pantsImg, stats: { defense: 1 }, value: 2, levelRequired: 1 },
+  { id: 'item-121', type: 'special', rarity: 'advanced', category: 'edc', name: 'Gun Cleaning Kit', img: sidearmImg, stats: { damage: 3 }, value: 10, levelRequired: 2 },
 
-  // More gear
-  { id: 'item-45', type: 'gunbelt', rarity: 'epic', name: 'Desperado Belt', img: gunbeltImg, stats: { damage: 12, defense: 8, speed: 3 }, value: 374, levelRequired: 7 },
-  { id: 'item-46', type: 'gunbelt', rarity: 'legendary', name: "Warlord's Bandolier", img: gunbeltImg, stats: { damage: 20, defense: 12, speed: 5 }, value: 1020, levelRequired: 13 },
-  { id: 'item-47', type: 'rope', rarity: 'rare', name: 'Reinforced Lasso', img: ropeImg, stats: { speed: 8, luck: 8 }, value: 102, levelRequired: 5 },
-  { id: 'item-48', type: 'canteen', rarity: 'rare', name: 'Silver Canteen', img: canteenImg, stats: { thirst: 60, energy: 10 }, value: 85, levelRequired: 4 },
-  { id: 'item-49', type: 'canteen', rarity: 'epic', name: 'Enchanted Flask', img: canteenImg, stats: { thirst: 80, health: 20, energy: 15 }, value: 340, levelRequired: 9 },
-  { id: 'item-50', type: 'tobacco', rarity: 'rare', name: 'Fine Cigars', img: tobaccoImg, stats: { energy: 25, charisma: 10, sleep: -5 }, value: 9, levelRequired: 4 },
+  // =================== MEDICINE ===================
+  { id: 'item-130', type: 'special', rarity: 'basic', category: 'medicine', name: 'Bandages & Liniment', img: canteenImg, stats: { health: 20 }, value: 4, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-131', type: 'special', rarity: 'advanced', category: 'medicine', name: 'Herbal Remedy Kit', img: canteenImg, stats: { health: 35, energy: 10 }, value: 14, levelRequired: 2, consumable: true, stackable: true },
+  { id: 'item-132', type: 'special', rarity: 'rare', category: 'medicine', name: 'Doctor\'s Medicine', img: canteenImg, stats: { health: 60, energy: 20 }, value: 51, levelRequired: 4, consumable: true },
+  { id: 'item-133', type: 'special', rarity: 'epic', category: 'medicine', name: 'Snake Oil Elixir', img: whiskeyImg, stats: { health: 40, energy: 30, luck: 10 }, value: 136, levelRequired: 6, consumable: true },
+  { id: 'item-134', type: 'special', rarity: 'advanced', category: 'medicine', name: 'Laudanum Tincture', img: whiskeyImg, stats: { health: 30, sleep: 25, speed: -5 }, value: 10, levelRequired: 2, consumable: true, stackable: true },
 
-  // More valuables
-  { id: 'item-51', type: 'special', rarity: 'epic', name: 'Ruby Ring', img: pocketwatchImg, stats: { luck: 15, charisma: 10 }, value: 255, levelRequired: 8 },
-  { id: 'item-52', type: 'special', rarity: 'legendary', name: 'Crown Jewel', img: pocketwatchImg, stats: { luck: 25, charisma: 20 }, value: 850, levelRequired: 14 },
+  // =================== LUXURY & VALUABLES ===================
+  { id: 'item-0', type: 'special', rarity: 'rare', category: 'valuable', name: 'Gold Coin', img: coinImg, stats: {}, value: 34, levelRequired: 1 },
+  { id: 'item-1', type: 'special', rarity: 'advanced', category: 'valuable', name: 'Silver Dollar', img: coinImg, stats: {}, value: 9, levelRequired: 1 },
+  { id: 'item-2', type: 'special', rarity: 'basic', category: 'valuable', name: 'Copper Cent', img: coinImg, stats: {}, value: 2, levelRequired: 1 },
+  { id: 'item-20', type: 'special', rarity: 'legendary', category: 'valuable', name: 'Gold Pocket Watch', img: pocketwatchImg, stats: { speed: 5, luck: 10 }, value: 128, levelRequired: 8 },
+  { id: 'item-51', type: 'special', rarity: 'epic', category: 'valuable', name: 'Ruby Ring', img: pocketwatchImg, stats: { luck: 15, charisma: 10 }, value: 255, levelRequired: 8 },
+  { id: 'item-52', type: 'special', rarity: 'legendary', category: 'valuable', name: 'Crown Jewel', img: pocketwatchImg, stats: { luck: 25, charisma: 20 }, value: 850, levelRequired: 14 },
+
+  { id: 'item-140', type: 'special', rarity: 'advanced', category: 'luxury', name: 'Harmonica', img: pocketwatchImg, stats: { charisma: 5, energy: 5 }, value: 8, levelRequired: 1 },
+  { id: 'item-141', type: 'special', rarity: 'advanced', category: 'luxury', name: 'Playing Cards', img: pocketwatchImg, stats: { luck: 3, charisma: 3 }, value: 4, levelRequired: 1 },
+  { id: 'item-142', type: 'special', rarity: 'basic', category: 'luxury', name: 'Dice Set', img: pocketwatchImg, stats: { luck: 2 }, value: 2, levelRequired: 1 },
+  { id: 'item-143', type: 'special', rarity: 'rare', category: 'luxury', name: 'Silver Conchos (set)', img: coinImg, stats: { charisma: 8 }, value: 68, levelRequired: 4 },
+  { id: 'item-144', type: 'special', rarity: 'epic', category: 'luxury', name: 'Fancy Silver Spurs', img: bootsImg, stats: { charisma: 12, speed: 3 }, value: 170, levelRequired: 6 },
+  { id: 'item-145', type: 'special', rarity: 'basic', category: 'luxury', name: 'Small Bible', img: pocketwatchImg, stats: { luck: 2, charisma: 1 }, value: 2, levelRequired: 1 },
+  { id: 'item-146', type: 'special', rarity: 'advanced', category: 'luxury', name: 'Ammo Bandolier', img: gunbeltImg, stats: { damage: 5, defense: 2 }, value: 22, levelRequired: 3 },
+
+  // Saddle & Specials
+  { id: 'item-6', type: 'special', rarity: 'rare', category: 'edc', name: 'Western Saddle', img: saddleImg, stats: { speed: 10 }, value: 119, levelRequired: 3 },
+  { id: 'item-25', type: 'special', rarity: 'epic', category: 'weapon', name: 'Dynamite', img: dynamiteImg, stats: { damage: 35 }, value: 255, levelRequired: 6, consumable: true },
 ];
