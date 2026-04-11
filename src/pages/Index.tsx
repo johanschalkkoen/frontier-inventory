@@ -14,6 +14,7 @@ import { SettingsSection } from '@/components/game/SettingsSection';
 import { InventorySection } from '@/components/game/InventorySection';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
+import { getStarterItemLocations } from '@/data/statClasses';
 
 function GameContent() {
   const { state, loaded } = useGame();
@@ -100,13 +101,16 @@ function AuthGate() {
     return (
       <CharacterCreation
         onComplete={async (data) => {
+          // Get starter item locations
+          const starterItems = getStarterItemLocations();
+
           await supabase.from('player_progress').update({
             gender: data.archetypeId.startsWith('f') ? 'female' : 'male',
             selected_character_id: data.portraitId,
             total_xp: 0,
-            wallet_amount: 0,
+            wallet_amount: 25, // Starting cash
             completed_missions: [],
-            item_locations: {},
+            item_locations: starterItems,
           }).eq('user_id', user.id);
 
           const { error } = await supabase.from('player_characters').insert({
@@ -115,7 +119,10 @@ function AuthGate() {
             archetype_id: data.archetypeId,
             portrait_id: data.portraitId,
             trait_points: data.traitPoints,
-            skill_points: data.special || {},
+            skill_points: {
+              statClassId: data.statClassId,
+              statClassValues: data.statClassValues,
+            },
             is_active: true,
           });
           if (!error) setHasCharacter(true);

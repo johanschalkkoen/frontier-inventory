@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
 import { characters } from '@/data/characters';
 import { archetypes, TRAIT_CATEGORIES, TOTAL_TRAIT_POINTS, MAX_PER_TRAIT, type TraitCategory } from '@/data/archetypes';
-import { DEFAULT_SPECIAL, SPECIAL_DESCRIPTIONS, DEFAULT_SKILLS, SKILL_CATEGORIES, SKILL_ICONS, type SpecialStats, type PlayerSkills } from '@/data/gameData';
-import { ChevronLeft, ChevronRight, Minus, Plus } from 'lucide-react';
+import { DEFAULT_SKILLS, SKILL_CATEGORIES, SKILL_ICONS, type PlayerSkills } from '@/data/gameData';
+import { STAT_CLASSES, type StatClass, generateRandomName, getStatClassBonuses } from '@/data/statClasses';
+import { ChevronLeft, ChevronRight, Minus, Plus, Shuffle } from 'lucide-react';
 
-const TOTAL_SPECIAL_POINTS = 28;
-const MIN_SPECIAL = 1;
-const MAX_SPECIAL = 10;
+const TOTAL_CLASS_POINTS = 28;
+const MIN_STAT = 1;
+const MAX_STAT = 10;
 
 interface CharacterCreationProps {
   onComplete: (data: {
@@ -14,7 +15,8 @@ interface CharacterCreationProps {
     archetypeId: string;
     portraitId: string;
     traitPoints: Record<string, number>;
-    special?: SpecialStats;
+    statClassId: string;
+    statClassValues: Record<string, number>;
   }) => void;
 }
 
@@ -27,16 +29,31 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
   const [traitPoints, setTraitPoints] = useState<Record<TraitCategory, number>>(
     Object.fromEntries(TRAIT_CATEGORIES.map(t => [t, 0])) as Record<TraitCategory, number>
   );
-  const [special, setSpecial] = useState<SpecialStats>({
-    strength: 4, perception: 4, endurance: 4, charisma: 4, intelligence: 4, agility: 4, luck: 4,
+  // Stat class selection
+  const [selectedStatClass, setSelectedStatClass] = useState<string>('grits');
+  const statClass = STAT_CLASSES.find(sc => sc.id === selectedStatClass)!;
+  
+  // Initialize stat values for all classes
+  const [classValues, setClassValues] = useState<Record<string, Record<string, number>>>(() => {
+    const initial: Record<string, Record<string, number>> = {};
+    for (const sc of STAT_CLASSES) {
+      const vals: Record<string, number> = {};
+      for (const attr of sc.attributes) {
+        vals[attr.key] = Math.floor(TOTAL_CLASS_POINTS / sc.attributes.length);
+      }
+      initial[sc.id] = vals;
+    }
+    return initial;
   });
+
+  const currentValues = classValues[selectedStatClass] || {};
+  const valuesUsed = Object.values(currentValues).reduce((s, v) => s + v, 0);
+  const valuesLeft = TOTAL_CLASS_POINTS - valuesUsed;
 
   const archetype = archetypes.find(a => a.id === selectedArchetype)!;
   const portrait = characters.find(c => c.id === selectedPortrait)!;
   const pointsUsed = Object.values(traitPoints).reduce((s, v) => s + v, 0);
   const pointsLeft = TOTAL_TRAIT_POINTS - pointsUsed;
-  const specialUsed = Object.values(special).reduce((s, v) => s + v, 0);
-  const specialLeft = TOTAL_SPECIAL_POINTS - specialUsed;
 
   const genderPortraits = useMemo(() => characters.filter(c => c.gender === selectedGender), [selectedGender]);
   const genderArchetypes = useMemo(() => archetypes.filter(a => a.gender === selectedGender), [selectedGender]);
@@ -59,20 +76,27 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
     });
   };
 
-  const adjustSpecial = (key: keyof SpecialStats, delta: number) => {
-    setSpecial(prev => {
-      const newVal = prev[key] + delta;
-      if (newVal < MIN_SPECIAL || newVal > MAX_SPECIAL) return prev;
-      const newUsed = specialUsed + delta;
-      if (newUsed > TOTAL_SPECIAL_POINTS) return prev;
-      return { ...prev, [key]: newVal };
+  const adjustClassStat = (key: string, delta: number) => {
+    setClassValues(prev => {
+      const vals = { ...prev[selectedStatClass] };
+      const newVal = (vals[key] || MIN_STAT) + delta;
+      if (newVal < MIN_STAT || newVal > MAX_STAT) return prev;
+      const newUsed = valuesUsed + delta;
+      if (newUsed > TOTAL_CLASS_POINTS) return prev;
+      vals[key] = newVal;
+      return { ...prev, [selectedStatClass]: vals };
     });
   };
 
-  // Calculate derived stats from SPECIAL
-  const derivedHealth = 100 + (special.endurance - 5) * 20;
-  const derivedDamage = 5 + (special.strength - 5) * 3;
-  const derivedSpeed = 10 + (special.agility - 5) * 3;
+  const randomizeName = () => {
+    setCharacterName(generateRandomName(selectedGender));
+  };
+
+  // Calculate derived stats from class
+  const derivedBonuses = getStatClassBonuses(selectedStatClass, currentValues);
+  const derivedHealth = 100 + (derivedBonuses.health || 0);
+  const derivedDamage = 5 + (derivedBonuses.damage || 0);
+  const derivedSpeed = 10 + (derivedBonuses.speed || 0);
 
   const handleComplete = () => {
     if (!characterName.trim()) return;
@@ -81,18 +105,19 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
       archetypeId: selectedArchetype,
       portraitId: selectedPortrait,
       traitPoints,
-      special,
+      statClassId: selectedStatClass,
+      statClassValues: currentValues,
     });
   };
 
   const canProceed = step === 1 ? characterName.trim().length > 0 : true;
   const totalSteps = 5;
-  const stepLabels = ['Name & Portrait', 'Choose Your Path', 'S.P.E.C.I.A.L', 'Allocate Traits', 'Final Summary'];
+  const stepLabels = ['Name & Portrait', 'Choose Your Path', `Choose Your Class`, 'Allocate Traits', 'Final Summary'];
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-2xl bg-game-container border-4 border-game-slot shadow-[0_0_50px_rgba(0,0,0,0.8)] p-6 max-h-[90vh] overflow-y-auto">
-        <h1 className="font-display text-2xl font-black text-accent tracking-wider text-center mb-1 drop-shadow-[2px_2px_0px_rgba(0,0,0,0.8)]">
+    <div className="flex min-h-screen items-center justify-center bg-background p-2 md:p-4">
+      <div className="w-full max-w-2xl bg-game-container border-4 border-game-slot shadow-[0_0_50px_rgba(0,0,0,0.8)] p-4 md:p-6 max-h-[90vh] overflow-y-auto">
+        <h1 className="font-display text-xl md:text-2xl font-black text-accent tracking-wider text-center mb-1 drop-shadow-[2px_2px_0px_rgba(0,0,0,0.8)]">
           Create Your Legend
         </h1>
         <p className="text-center text-muted-foreground text-xs mb-5">
@@ -111,14 +136,22 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
           <div className="space-y-5">
             <div>
               <label className="block text-accent font-display font-bold text-sm mb-2">CHARACTER NAME</label>
-              <input
-                type="text"
-                value={characterName}
-                onChange={e => setCharacterName(e.target.value.slice(0, 24))}
-                placeholder="Enter your frontier name..."
-                className="w-full bg-game-slot border-2 border-game-slot-border text-foreground px-3 py-2.5 font-body text-sm focus:outline-none focus:border-accent transition-colors placeholder:text-muted-foreground"
-                autoFocus
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={characterName}
+                  onChange={e => setCharacterName(e.target.value.slice(0, 24))}
+                  placeholder="Enter your frontier name..."
+                  className="flex-1 bg-game-slot border-2 border-game-slot-border text-foreground px-3 py-2.5 font-body text-sm focus:outline-none focus:border-accent transition-colors placeholder:text-muted-foreground"
+                  autoFocus
+                />
+                <button onClick={randomizeName}
+                  className="px-3 py-2.5 bg-primary/20 border-2 border-primary text-primary hover:bg-primary/40 transition-colors flex items-center gap-1"
+                  title="Randomize Name">
+                  <Shuffle className="w-4 h-4" />
+                  <span className="text-[9px] font-bold hidden md:inline">RANDOM</span>
+                </button>
+              </div>
               <span className="text-[9px] text-muted-foreground mt-1 block">{characterName.length}/24</span>
             </div>
 
@@ -211,53 +244,81 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
           </div>
         )}
 
-        {/* STEP 3: S.P.E.C.I.A.L Allocation */}
+        {/* STEP 3: Choose Stat Class & Allocate */}
         {step === 3 && (
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <label className="text-accent font-display font-bold text-sm">ALLOCATE S.P.E.C.I.A.L</label>
-              <span className={`text-sm font-bold font-display ${specialLeft > 0 ? 'text-accent' : 'text-rarity-advanced'}`}>
-                {specialLeft} points left
-              </span>
-            </div>
-            <p className="text-[10px] text-muted-foreground">
-              Distribute {TOTAL_SPECIAL_POINTS} points across your core attributes. Min {MIN_SPECIAL}, Max {MAX_SPECIAL} each.
+            <label className="text-accent font-display font-bold text-sm block">CHOOSE YOUR STAT CLASS</label>
+            <p className="text-[10px] text-muted-foreground -mt-2">
+              Select the system that defines your character's core attributes.
             </p>
 
-            <div className="space-y-2">
-              {(Object.keys(SPECIAL_DESCRIPTIONS) as (keyof SpecialStats)[]).map(key => (
-                <div key={key} className="bg-game-slot border border-game-slot-border p-2.5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-accent/20 border border-accent/40 flex items-center justify-center flex-shrink-0">
-                      <span className="text-accent font-display font-bold text-sm">{SPECIAL_DESCRIPTIONS[key].icon}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-[10px] font-bold text-foreground uppercase">{key}</span>
-                        <span className="text-accent font-bold text-sm font-display">{special[key]}</span>
+            {/* Class selection tabs */}
+            <div className="flex gap-1 flex-wrap">
+              {STAT_CLASSES.map(sc => (
+                <button key={sc.id} onClick={() => setSelectedStatClass(sc.id)}
+                  className={`px-2.5 py-1.5 text-[10px] font-bold font-display border-2 transition-all ${
+                    selectedStatClass === sc.id
+                      ? 'border-accent bg-accent/20 text-accent shadow-[0_0_8px_hsl(var(--game-gold)/0.3)]'
+                      : 'border-game-slot-border bg-game-slot/50 text-foreground hover:border-primary'
+                  }`}>
+                  {sc.acronym}
+                </button>
+              ))}
+            </div>
+
+            {/* Selected class info */}
+            <div className="bg-game-slot/60 border border-accent/30 p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-accent font-display font-bold text-base tracking-widest">{statClass.acronym}</span>
+                <span className="text-[9px] text-muted-foreground italic">— {statClass.tone}</span>
+              </div>
+              <p className="text-[10px] text-foreground/70 italic mb-3">{statClass.description}</p>
+
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-[10px] text-primary font-bold">ALLOCATE POINTS</span>
+                <span className={`text-sm font-bold font-display ${valuesLeft > 0 ? 'text-accent' : 'text-rarity-advanced'}`}>
+                  {valuesLeft} points left
+                </span>
+              </div>
+              <p className="text-[9px] text-muted-foreground mb-2">
+                Distribute {TOTAL_CLASS_POINTS} points. Min {MIN_STAT}, Max {MAX_STAT} each.
+              </p>
+
+              <div className="space-y-2">
+                {statClass.attributes.map(attr => (
+                  <div key={attr.key} className="bg-game-slot border border-game-slot-border p-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 bg-accent/20 border border-accent/40 flex items-center justify-center flex-shrink-0">
+                        <span className="text-accent font-display font-bold text-sm">{attr.icon}</span>
                       </div>
-                      <p className="text-[8px] text-muted-foreground leading-tight">{SPECIAL_DESCRIPTIONS[key].desc}</p>
-                    </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <button onClick={() => adjustSpecial(key, -1)} disabled={special[key] <= MIN_SPECIAL}
-                        className="w-6 h-6 flex items-center justify-center bg-game-slot-border hover:bg-primary disabled:opacity-30 transition-colors">
-                        <Minus className="w-3 h-3" />
-                      </button>
-                      <div className="flex gap-0.5">
-                        {Array.from({ length: MAX_SPECIAL }).map((_, i) => (
-                          <div key={i} className={`w-2.5 h-5 border transition-all ${
-                            i < special[key] ? 'bg-accent border-accent' : 'bg-game-slot border-game-slot-border'
-                          }`} />
-                        ))}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className="text-[10px] font-bold text-foreground uppercase">{attr.name}</span>
+                          <span className="text-accent font-bold text-sm font-display">{currentValues[attr.key] || MIN_STAT}</span>
+                        </div>
+                        <p className="text-[7px] text-muted-foreground leading-tight">{attr.desc}</p>
                       </div>
-                      <button onClick={() => adjustSpecial(key, 1)} disabled={special[key] >= MAX_SPECIAL || specialLeft <= 0}
-                        className="w-6 h-6 flex items-center justify-center bg-game-slot-border hover:bg-primary disabled:opacity-30 transition-colors">
-                        <Plus className="w-3 h-3" />
-                      </button>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button onClick={() => adjustClassStat(attr.key, -1)} disabled={(currentValues[attr.key] || MIN_STAT) <= MIN_STAT}
+                          className="w-6 h-6 flex items-center justify-center bg-game-slot-border hover:bg-primary disabled:opacity-30 transition-colors">
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <div className="flex gap-0.5">
+                          {Array.from({ length: MAX_STAT }).map((_, i) => (
+                            <div key={i} className={`w-2 h-4 border transition-all ${
+                              i < (currentValues[attr.key] || MIN_STAT) ? 'bg-accent border-accent' : 'bg-game-slot border-game-slot-border'
+                            }`} />
+                          ))}
+                        </div>
+                        <button onClick={() => adjustClassStat(attr.key, 1)} disabled={(currentValues[attr.key] || MIN_STAT) >= MAX_STAT || valuesLeft <= 0}
+                          className="w-6 h-6 flex items-center justify-center bg-game-slot-border hover:bg-primary disabled:opacity-30 transition-colors">
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
             {/* Derived stats preview */}
@@ -327,6 +388,7 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
               <div className="flex-1">
                 <h3 className="font-display text-xl font-bold text-accent">{characterName}</h3>
                 <p className="text-primary text-xs font-bold">{archetype.title}</p>
+                <p className="text-accent text-[9px] font-bold mt-1">Class: {statClass.acronym}</p>
                 <div className="flex gap-1 mt-1 flex-wrap">
                   {archetype.traits.map(t => (
                     <span key={t} className="text-[8px] px-1.5 py-0.5 bg-accent/10 text-accent border border-accent/30 font-bold">{t}</span>
@@ -340,16 +402,16 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
               </div>
             </div>
 
-            {/* S.P.E.C.I.A.L Summary */}
+            {/* Class Stats Summary */}
             <div className="bg-game-slot/60 border-2 border-game-slot-border p-3"
               style={{ borderImage: 'linear-gradient(180deg, hsl(var(--accent)/0.5), hsl(var(--primary)/0.3)) 1' }}>
-              <span className="text-[9px] text-accent font-display font-bold tracking-widest block mb-2">S.P.E.C.I.A.L</span>
-              <div className="grid grid-cols-7 gap-1">
-                {(Object.keys(SPECIAL_DESCRIPTIONS) as (keyof SpecialStats)[]).map(key => (
-                  <div key={key} className="bg-game-slot/80 border border-game-slot-border p-1 text-center">
-                    <span className="text-accent font-display font-bold text-sm block">{SPECIAL_DESCRIPTIONS[key].icon}</span>
-                    <span className="text-foreground font-bold text-base font-display">{special[key]}</span>
-                    <span className="text-[5px] text-muted-foreground block">{key.slice(0, 3).toUpperCase()}</span>
+              <span className="text-[9px] text-accent font-display font-bold tracking-widest block mb-2">{statClass.acronym}</span>
+              <div className={`grid gap-1 ${statClass.attributes.length <= 5 ? 'grid-cols-5' : 'grid-cols-3 md:grid-cols-6'}`}>
+                {statClass.attributes.map(attr => (
+                  <div key={attr.key} className="bg-game-slot/80 border border-game-slot-border p-1 text-center">
+                    <span className="text-accent font-display font-bold text-sm block">{attr.icon}</span>
+                    <span className="text-foreground font-bold text-base font-display">{currentValues[attr.key] || 1}</span>
+                    <span className="text-[5px] text-muted-foreground block">{attr.name.slice(0, 4).toUpperCase()}</span>
                   </div>
                 ))}
               </div>
@@ -391,7 +453,23 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
               </div>
             </div>
 
-            {/* Justice Preview */}
+            {/* Starting Gear */}
+            <div className="bg-game-slot/60 border border-game-slot-border p-3">
+              <span className="text-[9px] text-primary font-bold block mb-1.5">STARTING GEAR</span>
+              <div className="grid grid-cols-3 gap-1 text-[8px] text-foreground/70">
+                <span>⌁ Percussion Revolver</span>
+                <span>╪ Single-Shot Carbine</span>
+                <span>⌐ Stetson Hat</span>
+                <span>⊥ Work Boots</span>
+                <span>⊶ Plain Leather Belt</span>
+                <span>∏ Denim Jeans</span>
+                <span>⊤ Cotton Work Shirt</span>
+                <span>• Revolver Cartridges</span>
+                <span>• Rifle Rounds</span>
+              </div>
+            </div>
+
+            {/* Reputation Preview */}
             <div className="bg-game-slot/60 border border-game-slot-border p-3">
               <span className="text-[9px] text-primary font-bold block mb-1.5">STARTING REPUTATION</span>
               <div className="grid grid-cols-3 gap-1.5 text-center text-[9px]">
