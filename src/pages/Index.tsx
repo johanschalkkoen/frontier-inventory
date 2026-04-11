@@ -115,6 +115,7 @@ function AuthGate() {
             archetype_id: data.archetypeId,
             portrait_id: data.portraitId,
             trait_points: data.traitPoints,
+            skill_points: data.special || {},
             is_active: true,
           });
           if (!error) setHasCharacter(true);

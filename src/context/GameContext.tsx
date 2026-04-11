@@ -186,6 +186,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             traitPoints: (charResult.data.trait_points as Record<string, number>) || {},
             selectedCharacterId: charResult.data.portrait_id || next.selectedCharacterId,
             gender: arch?.gender || next.gender,
+            special: (charResult.data.skill_points as unknown as SpecialStats) || { ...DEFAULT_SPECIAL },
           };
         }
 
