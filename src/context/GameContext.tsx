@@ -477,7 +477,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       state, setGender, setSelectedCharacter, setActiveTab, equipItem, unequipItem, moveItem,
       getItemsInLocation, getEquippedItem, getCalculatedStats, getCoinTotal, getBagCount,
       getPlayerLevel, startMission, completeMission, setSelectedRegion, isMissionCompleted,
-      buyItem, sellItem, hasItem, processEncounter, loaded,
+      buyItem, sellItem, hasItem, processEncounter, abortQuest, useHealItem, loaded,
     }}>
       {children}
     </GameContext.Provider>
