@@ -1,10 +1,11 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
-import { type GameItem, type SlotType, itemDatabase, STANDARD_STATS, DEFAULT_SPECIAL, DEFAULT_VITALS, DEFAULT_JUSTICE, DEFAULT_GAMEPLAY, DEFAULT_SKILLS, type SpecialStats, type VitalStats, type JusticeStats, type GameplayStats, type PlayerSkills } from '@/data/gameData';
+import { type GameItem, type SlotType, itemDatabase, STANDARD_STATS, DEFAULT_VITALS, DEFAULT_JUSTICE, DEFAULT_GAMEPLAY, DEFAULT_SKILLS, type VitalStats, type JusticeStats, type GameplayStats, type PlayerSkills } from '@/data/gameData';
 import { getLevelFromXp, mapRegions, type Mission, type MissionEncounter } from '@/data/mapData';
 import { useAuth } from './AuthContext';
 import { loadProgress, saveProgress, type SaveData } from '@/lib/progressSync';
 import { supabase } from '@/integrations/supabase/client';
 import { archetypes, TRAIT_STAT_MAP, type TraitCategory } from '@/data/archetypes';
+import { STAT_CLASSES, getStatClassBonuses } from '@/data/statClasses';
 
 interface ItemLocation {
   area: 'bag-left' | 'bag-right' | 'equipped';
@@ -35,12 +36,16 @@ interface GameState {
   archetypeId: string;
   traitPoints: Record<string, number>;
   activeQuest: ActiveQuest | null;
-  // New stats systems
-  special: SpecialStats;
+  // Stat class system
+  statClassId: string;
+  statClassValues: Record<string, number>;
+  // Dynamic stats
   vitals: VitalStats;
   justice: JusticeStats;
   gameplay: GameplayStats;
   skills: PlayerSkills;
+  // Level-up points
+  unspentStatPoints: number;
 }
 
 interface GameContextType {
@@ -67,6 +72,7 @@ interface GameContextType {
   processEncounter: (action: 'fight' | 'evade' | 'flee') => 'success' | 'fail' | 'none';
   abortQuest: () => void;
   useHealItem: (itemId: string) => void;
+  spendStatPoint: (attrKey: string) => void;
   loaded: boolean;
 }
 
@@ -92,11 +98,13 @@ function defaultState(): GameState {
     archetypeId: 'jace',
     traitPoints: {},
     activeQuest: null,
-    special: { ...DEFAULT_SPECIAL },
+    statClassId: 'grits',
+    statClassValues: { guts: 5, resolve: 5, instinct: 5, toughness: 5, savvy: 5 },
     vitals: { ...DEFAULT_VITALS },
     justice: { ...DEFAULT_JUSTICE },
     gameplay: { ...DEFAULT_GAMEPLAY },
     skills: { ...DEFAULT_SKILLS },
+    unspentStatPoints: 0,
   };
 }
 
@@ -129,7 +137,6 @@ function generateQuestEncounters(mission: Mission, playerLevel: number): Mission
   return result;
 }
 
-// Calculate quest stat costs based on risk level
 function getQuestCosts(mission: Mission) {
   const level = mission.levelRequired;
   const encounters = mission.encounters?.length || 0;
@@ -144,6 +151,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<GameState>(defaultState);
   const [loaded, setLoaded] = useState(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const prevLevel = useRef<number>(1);
 
   useEffect(() => {
     if (!user) {
@@ -179,6 +187,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         if (charResult.data) {
           const arch = archetypes.find(a => a.id === charResult.data.archetype_id);
+          const skillData = charResult.data.skill_points as any;
+          
+          // Parse stat class data from skill_points
+          let statClassId = 'grits';
+          let statClassValues: Record<string, number> = { guts: 5, resolve: 5, instinct: 5, toughness: 5, savvy: 5 };
+          
+          if (skillData && skillData.statClassId) {
+            statClassId = skillData.statClassId;
+            statClassValues = skillData.statClassValues || statClassValues;
+          }
+
           next = {
             ...next,
             characterName: charResult.data.character_name,
@@ -186,15 +205,38 @@ export function GameProvider({ children }: { children: ReactNode }) {
             traitPoints: (charResult.data.trait_points as Record<string, number>) || {},
             selectedCharacterId: charResult.data.portrait_id || next.selectedCharacterId,
             gender: arch?.gender || next.gender,
-            special: (charResult.data.skill_points as unknown as SpecialStats) || { ...DEFAULT_SPECIAL },
+            statClassId,
+            statClassValues,
           };
         }
+
+        // Calculate initial level for level-up tracking
+        prevLevel.current = getLevelFromXp(next.totalXp).level;
 
         return next;
       });
       setLoaded(true);
     });
   }, [user]);
+
+  // Level-up detection: award stat points and boost vitals on level up
+  useEffect(() => {
+    if (!loaded) return;
+    const currentLevel = getLevelFromXp(state.totalXp).level;
+    if (currentLevel > prevLevel.current) {
+      const levelsGained = currentLevel - prevLevel.current;
+      prevLevel.current = currentLevel;
+      setState(s => ({
+        ...s,
+        unspentStatPoints: s.unspentStatPoints + levelsGained * 2,
+        vitals: {
+          ...s.vitals,
+          health: Math.min(100, s.vitals.health + levelsGained * 10),
+          energy: Math.min(100, s.vitals.energy + levelsGained * 10),
+        },
+      }));
+    }
+  }, [state.totalXp, loaded]);
 
   // Auto-save debounced
   useEffect(() => {
@@ -267,21 +309,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
     for (const key of Object.keys(current)) {
       current[key] += (playerLevel.level - 1) * 2;
     }
-    // Apply SPECIAL bonuses
-    current['health'] += (state.special.endurance - 5) * 20;
-    current['energy'] += (state.special.endurance - 5) * 10;
-    current['damage'] += (state.special.strength - 5) * 3;
-    current['speed'] += (state.special.agility - 5) * 3;
-    current['luck'] += (state.special.luck - 5) * 3;
-    current['charisma'] += (state.special.charisma - 5) * 3;
-    current['defense'] += (state.special.strength - 5) * 2;
+    
+    // Apply stat class bonuses
+    const classBonuses = getStatClassBonuses(state.statClassId, state.statClassValues);
+    for (const [key, val] of Object.entries(classBonuses)) {
+      if (key in current) current[key] += val;
+    }
 
+    // Archetype bonuses
     const arch = archetypes.find(a => a.id === state.archetypeId);
     if (arch) {
       for (const [s, v] of Object.entries(arch.bonusStats)) {
         if (s in current) current[s] += v;
       }
     }
+    
+    // Trait bonuses
     for (const [traitName, pts] of Object.entries(state.traitPoints)) {
       const mapping = TRAIT_STAT_MAP[traitName as TraitCategory];
       if (mapping && typeof pts === 'number') {
@@ -290,6 +333,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
       }
     }
+    
+    // Equipment bonuses
     itemDatabase.forEach(item => {
       const loc = state.itemLocations[item.id];
       if (loc?.area === 'equipped') {
@@ -299,7 +344,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     });
     return current;
-  }, [state.itemLocations, state.totalXp, state.archetypeId, state.traitPoints, state.special]);
+  }, [state.itemLocations, state.totalXp, state.archetypeId, state.traitPoints, state.statClassId, state.statClassValues]);
 
   const getCoinTotal = useCallback(() => {
     return itemDatabase.reduce((sum, item) => {
@@ -316,6 +361,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const getPlayerLevel = useCallback(() => {
     return getLevelFromXp(state.totalXp);
   }, [state.totalXp]);
+
+  const spendStatPoint = useCallback((attrKey: string) => {
+    setState(s => {
+      if (s.unspentStatPoints <= 0) return s;
+      const sc = STAT_CLASSES.find(c => c.id === s.statClassId);
+      if (!sc) return s;
+      const attr = sc.attributes.find(a => a.key === attrKey);
+      if (!attr) return s;
+      const currentVal = s.statClassValues[attrKey] || 1;
+      if (currentVal >= 10) return s;
+      return {
+        ...s,
+        unspentStatPoints: s.unspentStatPoints - 1,
+        statClassValues: { ...s.statClassValues, [attrKey]: currentVal + 1 },
+      };
+    });
+  }, []);
 
   const startMission = useCallback((missionId: string): boolean => {
     let started = false;
@@ -334,7 +396,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const playerLevel = getLevelFromXp(s.totalXp).level;
       if (playerLevel < mission.levelRequired) return s;
 
-      // Deduct initial energy for starting quest
       const costs = getQuestCosts(mission);
       const newVitals = { ...s.vitals };
       newVitals.energy = Math.max(0, newVitals.energy - Math.floor(costs.energy * 0.3));
@@ -372,13 +433,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const encounter = quest.encounters[quest.currentEncounterIndex];
       if (!encounter) return s;
 
+      // Calculate combat stats using stat class
       const stats = (() => {
         const playerLevel = getLevelFromXp(s.totalXp);
         const current = { ...STANDARD_STATS };
         for (const key of Object.keys(current)) current[key] += (playerLevel.level - 1) * 2;
-        current['damage'] += (s.special.strength - 5) * 3;
-        current['speed'] += (s.special.agility - 5) * 3;
-        current['luck'] += (s.special.luck - 5) * 3;
+        
+        const classBonuses = getStatClassBonuses(s.statClassId, s.statClassValues);
+        for (const [key, val] of Object.entries(classBonuses)) {
+          if (key in current) current[key] += val;
+        }
+        
         itemDatabase.forEach(item => {
           const loc = s.itemLocations[item.id];
           if (loc?.area === 'equipped') {
@@ -393,13 +458,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const playerPower = (stats.damage || 10) + (stats.defense || 0) + (stats.speed || 0) + (stats.luck || 0);
       const encounterPower = encounter.difficulty * 15 + Math.random() * 20;
 
-      // Apply encounter stat costs
       const newVitals = { ...s.vitals };
       let success = false;
 
       if (action === 'fight') {
         success = playerPower + Math.random() * 30 > encounterPower;
-        // Fighting costs more energy and health
         newVitals.energy = Math.max(0, newVitals.energy - (5 + encounter.difficulty));
         newVitals.hunger = Math.max(0, newVitals.hunger - 3);
         newVitals.thirst = Math.max(0, newVitals.thirst - 4);
@@ -464,7 +527,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const item = itemDatabase.find(i => i.id === itemId);
       const newLocs = { ...s.itemLocations };
       delete newLocs[itemId];
-      // Apply item stats to vitals
       const newVitals = { ...s.vitals };
       if (item) {
         if (item.stats.health) newVitals.health = Math.min(100, Math.max(0, newVitals.health + item.stats.health));
@@ -533,7 +595,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
       if (!mission) return s;
 
-      // Apply completion costs to vitals
       const costs = getQuestCosts(mission);
       const newVitals = { ...s.vitals };
       newVitals.energy = Math.max(0, newVitals.energy - costs.energy);
@@ -541,9 +602,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       newVitals.hunger = Math.max(0, newVitals.hunger - costs.hunger);
       newVitals.thirst = Math.max(0, newVitals.thirst - costs.thirst);
       newVitals.sleep = Math.max(0, newVitals.sleep - costs.sleep);
-      newVitals.morale = Math.min(100, Math.max(0, newVitals.morale + 10)); // completing boosts morale
+      newVitals.morale = Math.min(100, Math.max(0, newVitals.morale + 10));
 
-      // Update skills based on quest type
       const newSkills = { ...s.skills };
       if (mission.type === 'Combat' || mission.type === 'Bounty') {
         newSkills.pistols = Math.min(100, newSkills.pistols + 1);
@@ -559,7 +619,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
         newSkills.firstAid = Math.min(100, newSkills.firstAid + 1);
       }
 
-      // Justice impact
       const newJustice = { ...s.justice };
       if (mission.type === 'Bounty') {
         newJustice.honor = Math.min(100, newJustice.honor + 2);
@@ -592,7 +651,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       state, setGender, setSelectedCharacter, setActiveTab, equipItem, unequipItem, moveItem,
       getItemsInLocation, getEquippedItem, getCalculatedStats, getCoinTotal, getBagCount,
       getPlayerLevel, startMission, completeMission, setSelectedRegion, isMissionCompleted,
-      buyItem, sellItem, hasItem, processEncounter, abortQuest, useHealItem, loaded,
+      buyItem, sellItem, hasItem, processEncounter, abortQuest, useHealItem, spendStatPoint, loaded,
     }}>
       {children}
     </GameContext.Provider>

@@ -2,10 +2,12 @@ import { useGame } from '@/context/GameContext';
 import { StatusBar } from './StatusBar';
 import { EquipSlot } from './EquipSlot';
 import { InventoryBag } from './InventoryBag';
-import { STANDARD_STATS, SPECIAL_DESCRIPTIONS, type SlotType } from '@/data/gameData';
+import { STANDARD_STATS, type SlotType } from '@/data/gameData';
 import { characters } from '@/data/characters';
 import { archetypes } from '@/data/archetypes';
+import { STAT_CLASSES } from '@/data/statClasses';
 import { useState } from 'react';
+import { Plus } from 'lucide-react';
 
 const leftSlots: { type: SlotType; label: string; icon: string }[] = [
   { type: 'hat', label: 'Hat', icon: '⌐' },
@@ -42,7 +44,7 @@ const statIcons: Record<string, string> = {
 };
 
 export function CharacterSection() {
-  const { state, getCalculatedStats, getCoinTotal, getPlayerLevel, setActiveTab } = useGame();
+  const { state, getCalculatedStats, getCoinTotal, getPlayerLevel, setActiveTab, spendStatPoint } = useGame();
   const stats = getCalculatedStats();
   const coinTotal = getCoinTotal();
   const { level, currentXp, xpToNext } = getPlayerLevel();
@@ -54,6 +56,7 @@ export function CharacterSection() {
   const currentChar = characters.find(c => c.id === state.selectedCharacterId);
   const xpPct = xpToNext > 0 ? (currentXp / xpToNext) * 100 : 0;
   const archetype = archetypes.find(a => a.id === state.archetypeId);
+  const statClass = STAT_CLASSES.find(sc => sc.id === state.statClassId);
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 w-full">
@@ -92,6 +95,11 @@ export function CharacterSection() {
               <span className="text-[7px] font-bold text-foreground/70 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">{Math.round(xpPct)}%</span>
             </div>
           </div>
+          {state.unspentStatPoints > 0 && (
+            <div className="mt-1 text-center">
+              <span className="text-[9px] text-accent font-bold animate-pulse">★ {state.unspentStatPoints} stat point{state.unspentStatPoints > 1 ? 's' : ''} available!</span>
+            </div>
+          )}
         </div>
 
         {/* Vital Status Bars */}
@@ -151,21 +159,34 @@ export function CharacterSection() {
           </div>
         </div>
 
-        {/* SPECIAL Stats */}
-        <div className="mt-3 bg-game-slot/60 p-2 md:p-3 border-2 border-game-slot-border"
-          style={{ borderImage: 'linear-gradient(180deg, hsl(var(--accent)/0.5), hsl(var(--primary)/0.3)) 1' }}>
-          <div className="text-[9px] text-accent font-display font-bold tracking-widest mb-2">S.P.E.C.I.A.L</div>
-          <div className="grid grid-cols-7 gap-1">
-            {(Object.keys(SPECIAL_DESCRIPTIONS) as (keyof typeof SPECIAL_DESCRIPTIONS)[]).map(key => (
-              <div key={key} className="bg-game-slot/80 border border-game-slot-border p-1 text-center group relative"
-                title={SPECIAL_DESCRIPTIONS[key].desc}>
-                <span className="text-accent font-display font-bold text-sm block">{SPECIAL_DESCRIPTIONS[key].icon}</span>
-                <span className="text-foreground font-bold text-base font-display">{state.special[key]}</span>
-                <span className="text-[5px] text-muted-foreground block">{key.slice(0, 3).toUpperCase()}</span>
-              </div>
-            ))}
+        {/* Stat Class Display */}
+        {statClass && (
+          <div className="mt-3 bg-game-slot/60 p-2 md:p-3 border-2 border-game-slot-border"
+            style={{ borderImage: 'linear-gradient(180deg, hsl(var(--accent)/0.5), hsl(var(--primary)/0.3)) 1' }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[9px] text-accent font-display font-bold tracking-widest">{statClass.acronym}</span>
+              {state.unspentStatPoints > 0 && (
+                <span className="text-[8px] text-accent font-bold animate-pulse">+{state.unspentStatPoints} pts</span>
+              )}
+            </div>
+            <div className={`grid gap-1 ${statClass.attributes.length <= 5 ? 'grid-cols-5' : 'grid-cols-3 md:grid-cols-6'}`}>
+              {statClass.attributes.map(attr => (
+                <div key={attr.key} className="bg-game-slot/80 border border-game-slot-border p-1 text-center group relative"
+                  title={attr.desc}>
+                  <span className="text-accent font-display font-bold text-sm block">{attr.icon}</span>
+                  <span className="text-foreground font-bold text-base font-display">{state.statClassValues[attr.key] || 1}</span>
+                  <span className="text-[5px] text-muted-foreground block">{attr.name.slice(0, 4).toUpperCase()}</span>
+                  {state.unspentStatPoints > 0 && (state.statClassValues[attr.key] || 1) < 10 && (
+                    <button onClick={() => spendStatPoint(attr.key)}
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-accent text-accent-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Plus className="w-2.5 h-2.5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Quick Stats */}
         <div className="mt-3 bg-game-slot/60 p-2 md:p-3 border-2 border-game-slot-border"

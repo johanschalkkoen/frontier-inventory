@@ -1,15 +1,18 @@
 import { useGame } from '@/context/GameContext';
 import { archetypes } from '@/data/archetypes';
 import { characters } from '@/data/characters';
-import { STANDARD_STATS, SPECIAL_DESCRIPTIONS, SKILL_CATEGORIES, SKILL_ICONS, type PlayerSkills } from '@/data/gameData';
+import { STANDARD_STATS, SKILL_CATEGORIES, SKILL_ICONS, type PlayerSkills } from '@/data/gameData';
+import { STAT_CLASSES } from '@/data/statClasses';
+import { Plus } from 'lucide-react';
 
 export function ProfileSection() {
-  const { state, getCalculatedStats, getPlayerLevel } = useGame();
+  const { state, getCalculatedStats, getPlayerLevel, spendStatPoint } = useGame();
   const { level, currentXp, xpToNext } = getPlayerLevel();
   const stats = getCalculatedStats();
   const archetype = archetypes.find(a => a.id === state.archetypeId);
   const currentChar = characters.find(c => c.id === state.selectedCharacterId);
   const xpPct = xpToNext > 0 ? (currentXp / xpToNext) * 100 : 0;
+  const statClass = STAT_CLASSES.find(sc => sc.id === state.statClassId);
 
   return (
     <div className="flex-1 max-w-[750px]">
@@ -38,6 +41,7 @@ export function ProfileSection() {
           {archetype && (
             <>
               <p className="text-primary text-sm font-bold">{archetype.title}</p>
+              {statClass && <p className="text-accent text-[10px] font-bold mt-0.5">Class: {statClass.acronym}</p>}
               <div className="flex gap-1.5 mt-2 flex-wrap">
                 {archetype.traits.map(t => (
                   <span key={t} className="text-[9px] px-2 py-0.5 bg-accent/10 text-accent border border-accent/30 font-bold">{t}</span>
@@ -60,6 +64,11 @@ export function ProfileSection() {
             <div className="h-3 bg-game-slot border border-game-slot-border rounded-sm overflow-hidden">
               <div className="h-full bg-gradient-to-r from-accent to-primary transition-all duration-500" style={{ width: `${xpPct}%` }} />
             </div>
+            {state.unspentStatPoints > 0 && (
+              <div className="mt-1">
+                <span className="text-[9px] text-accent font-bold animate-pulse">★ {state.unspentStatPoints} stat point{state.unspentStatPoints > 1 ? 's' : ''} to spend!</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -73,31 +82,50 @@ export function ProfileSection() {
         </div>
       )}
 
-      {/* S.P.E.C.I.A.L Attributes */}
-      <div className="bg-game-slot/60 border-2 border-game-slot-border p-3 mb-4"
-        style={{ borderImage: 'linear-gradient(180deg, hsl(var(--accent)/0.5), hsl(var(--primary)/0.3)) 1' }}>
-        <h3 className="font-display text-sm font-bold text-accent mb-3">S · P · E · C · I · A · L</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {(Object.keys(SPECIAL_DESCRIPTIONS) as (keyof typeof SPECIAL_DESCRIPTIONS)[]).map(key => (
-            <div key={key} className="bg-game-slot/80 border border-game-slot-border p-2 flex items-center gap-3">
-              <div className="w-10 h-10 bg-accent/20 border border-accent/40 flex items-center justify-center flex-shrink-0">
-                <span className="text-accent font-display font-bold text-lg">{SPECIAL_DESCRIPTIONS[key].icon}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-foreground uppercase">{key}</span>
-                  <span className="text-accent font-bold text-base font-display">{state.special[key]}</span>
+      {/* Stat Class Attributes */}
+      {statClass && (
+        <div className="bg-game-slot/60 border-2 border-game-slot-border p-3 mb-4"
+          style={{ borderImage: 'linear-gradient(180deg, hsl(var(--accent)/0.5), hsl(var(--primary)/0.3)) 1' }}>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-display text-sm font-bold text-accent">{statClass.acronym} — {statClass.name}</h3>
+            {state.unspentStatPoints > 0 && (
+              <span className="text-[9px] text-accent font-bold animate-pulse bg-accent/10 px-2 py-0.5 border border-accent/30">
+                +{state.unspentStatPoints} points
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {statClass.attributes.map(attr => {
+              const val = state.statClassValues[attr.key] || 1;
+              return (
+                <div key={attr.key} className="bg-game-slot/80 border border-game-slot-border p-2 flex items-center gap-3 group relative">
+                  <div className="w-10 h-10 bg-accent/20 border border-accent/40 flex items-center justify-center flex-shrink-0">
+                    <span className="text-accent font-display font-bold text-lg">{attr.icon}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-foreground uppercase">{attr.name}</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-accent font-bold text-base font-display">{val}</span>
+                        {state.unspentStatPoints > 0 && val < 10 && (
+                          <button onClick={() => spendStatPoint(attr.key)}
+                            className="w-5 h-5 bg-accent text-accent-foreground flex items-center justify-center hover:bg-primary transition-colors">
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-[8px] text-muted-foreground leading-tight mt-0.5">{attr.desc}</p>
+                    <div className="h-1.5 bg-game-slot border border-game-slot-border/50 mt-1 overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-accent to-primary transition-all" style={{ width: `${val * 10}%` }} />
+                    </div>
+                  </div>
                 </div>
-                <p className="text-[8px] text-muted-foreground leading-tight mt-0.5">{SPECIAL_DESCRIPTIONS[key].desc}</p>
-                {/* Stat bar */}
-                <div className="h-1.5 bg-game-slot border border-game-slot-border/50 mt-1 overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-accent to-primary transition-all" style={{ width: `${state.special[key] * 10}%` }} />
-                </div>
-              </div>
-            </div>
-          ))}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Vital Stats */}
       <div className="bg-game-slot/60 border-2 border-game-slot-border p-3 mb-4"
