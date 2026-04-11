@@ -26,6 +26,10 @@ const rightSlots: { type: SlotType; label: string; icon: string }[] = [
   { type: 'tobacco', label: 'Smoke', icon: '🚬' },
 ];
 
+const statIcons: Record<string, string> = {
+  damage: '⚔️', defense: '🛡️', speed: '🏃', luck: '🍀', charisma: '🗣️',
+};
+
 export function CharacterSection() {
   const { state, getCalculatedStats, getCoinTotal, getPlayerLevel, setActiveTab } = useGame();
   const stats = getCalculatedStats();
@@ -41,12 +45,12 @@ export function CharacterSection() {
   const archetype = archetypes.find(a => a.id === state.archetypeId);
 
   return (
-    <div className="flex flex-col md:flex-row gap-4 w-full">
+    <div className="flex flex-col lg:flex-row gap-4 w-full">
       {/* Left: Character equipment */}
-      <div className="w-full md:w-[400px] flex-shrink-0">
+      <div className="w-full lg:w-[420px] flex-shrink-0">
         {/* Character Name & Profile Button */}
         <div className="flex items-center justify-center gap-3 mb-1">
-          <h1 className="font-display text-xl md:text-2xl font-black text-accent tracking-wider text-center drop-shadow-[2px_2px_0px_rgba(0,0,0,0.8)]">
+          <h1 className="font-display text-lg md:text-2xl font-black text-accent tracking-wider text-center drop-shadow-[2px_2px_0px_rgba(0,0,0,0.8)]">
             {state.characterName || 'Frontier Legend'}
           </h1>
           <button onClick={() => setActiveTab('PROFILE')}
@@ -56,38 +60,46 @@ export function CharacterSection() {
         </div>
 
         {archetype && (
-          <p className="text-center text-muted-foreground text-[10px] mb-1">{archetype.title} — {archetype.traits.join(' · ')}</p>
+          <p className="text-center text-muted-foreground text-[9px] md:text-[10px] mb-1">{archetype.title} — {archetype.traits.join(' · ')}</p>
         )}
 
         {/* Level & XP */}
         <div className="mb-3 bg-game-slot/50 p-2 border-2 border-game-slot-border"
-          style={{ borderImage: 'linear-gradient(135deg, hsl(var(--primary)/0.5), hsl(var(--accent)/0.3)) 1' }}>
+          style={{ borderImage: 'linear-gradient(135deg, hsl(var(--accent)/0.5), hsl(var(--primary)/0.3)) 1' }}>
           <div className="flex justify-between items-center mb-1">
             <span className="text-accent font-display font-bold text-sm">⭐ LEVEL {level}</span>
             <span className="text-[9px] text-muted-foreground">{currentXp} / {xpToNext} XP</span>
           </div>
-          <div className="h-3 bg-game-slot border border-game-slot-border rounded-sm overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-accent to-primary transition-all duration-500" style={{ width: `${xpPct}%` }} />
+          <div className="h-4 bg-game-slot border border-game-slot-border rounded-sm overflow-hidden relative"
+            style={{ boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)' }}>
+            <div className="h-full transition-all duration-700" style={{
+              width: `${xpPct}%`,
+              background: 'linear-gradient(90deg, hsl(30 47% 35%), hsl(43 90% 55%), hsl(30 47% 53%))',
+            }} />
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-b from-foreground/15 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-[7px] font-bold text-foreground/70 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">{Math.round(xpPct)}%</span>
+            </div>
           </div>
         </div>
 
-        {/* Status Bars with icons */}
+        {/* Status Bars */}
         <div className="grid grid-cols-2 gap-2 mb-3">
           <StatusBar label="HEALTH" value={stats.health || 100} max={100} colorClass="bg-bar-health" icon="❤️" />
           <StatusBar label="ENERGY" value={stats.energy || 100} max={100} colorClass="bg-bar-energy" icon="⚡" />
           <StatusBar label="QUENCH" value={stats.thirst || 100} max={100} colorClass="bg-bar-thirst" icon="💧" />
-          <StatusBar label="SLEEP" value={stats.sleep || 100} max={100} colorClass="bg-bar-sleep" icon="😴" />
+          <StatusBar label="SLEEP" value={stats.sleep || 100} max={100} colorClass="bg-bar-sleep" icon="🌙" />
         </div>
 
         {/* Equipment layout */}
-        <div className="flex gap-2 md:gap-3 items-center justify-center">
-          <div className="flex flex-col gap-1.5 md:gap-2">
+        <div className="flex gap-1.5 md:gap-3 items-center justify-center">
+          <div className="flex flex-col gap-1 md:gap-2">
             {leftSlots.map(s => <EquipSlot key={s.type} slotType={s.type} label={s.label} icon={s.icon} onHover={onHover} onLeave={onLeave} />)}
           </div>
 
           {/* Character portrait */}
           <div className="flex flex-col items-center gap-1">
-            <div className="relative w-[120px] md:w-[155px] h-[270px] md:h-[344px] bg-game-slot overflow-hidden"
+            <div className="relative w-[100px] md:w-[155px] h-[230px] md:h-[344px] bg-game-slot overflow-hidden"
               style={{
                 border: '3px solid transparent',
                 borderImage: 'linear-gradient(180deg, hsl(var(--accent)), hsl(var(--primary)/0.5), hsl(var(--accent)/0.3)) 1',
@@ -105,11 +117,11 @@ export function CharacterSection() {
               ))}
             </div>
             {currentChar && (
-              <span className="text-[10px] text-accent font-bold tracking-wider">{currentChar.name.toUpperCase()}</span>
+              <span className="text-[9px] md:text-[10px] text-accent font-bold tracking-wider">{currentChar.name.toUpperCase()}</span>
             )}
           </div>
 
-          <div className="flex flex-col gap-1.5 md:gap-2">
+          <div className="flex flex-col gap-1 md:gap-2">
             {rightSlots.map(s => <EquipSlot key={s.type} slotType={s.type} label={s.label} icon={s.icon} onHover={onHover} onLeave={onLeave} />)}
           </div>
         </div>
@@ -118,23 +130,31 @@ export function CharacterSection() {
         <div className="flex justify-center gap-2 mt-3 p-2 bg-game-slot/20 border border-game-slot-border/30"
           style={{ borderImage: 'linear-gradient(90deg, transparent, hsl(var(--primary)/0.3), transparent) 1' }}>
           <EquipSlot slotType="special" label="Misc" icon="📦" onHover={onHover} onLeave={onLeave} />
+          <EquipSlot slotType="shovel" label="Shovel" icon="⛏️" onHover={onHover} onLeave={onLeave} />
         </div>
 
         {/* Quick Stats */}
-        <div className="mt-3 bg-game-slot p-2 border-2 border-game-slot-border"
-          style={{ borderImage: 'linear-gradient(180deg, hsl(var(--primary)/0.4), hsl(var(--accent)/0.2)) 1' }}>
-          <div className="grid grid-cols-3 gap-1.5">
-            {['damage', 'defense', 'speed', 'luck', 'charisma'].map(k => (
-              <div key={k} className="bg-game-slot/80 border border-game-slot-border p-1.5 text-center">
-                <span className="text-[7px] text-muted-foreground block">{k.toUpperCase()}</span>
-                <span className={`text-sm font-bold ${(stats[k] || 0) > (STANDARD_STATS[k] || 0) ? 'text-rarity-advanced' : 'text-foreground'}`}>
-                  {stats[k] || 0}
-                </span>
-              </div>
-            ))}
+        <div className="mt-3 bg-game-slot/60 p-2 md:p-3 border-2 border-game-slot-border"
+          style={{ borderImage: 'linear-gradient(180deg, hsl(var(--accent)/0.4), hsl(var(--primary)/0.2)) 1' }}>
+          <div className="grid grid-cols-5 gap-1 md:gap-1.5">
+            {['damage', 'defense', 'speed', 'luck', 'charisma'].map(k => {
+              const val = stats[k] || 0;
+              const base = STANDARD_STATS[k] || 0;
+              const isAbove = val > base;
+              return (
+                <div key={k} className="bg-game-slot/80 border border-game-slot-border p-1 md:p-1.5 text-center relative overflow-hidden"
+                  style={{ borderImage: isAbove ? 'linear-gradient(135deg, hsl(120 50% 45% / 0.4), transparent) 1' : undefined }}>
+                  <span className="text-xs md:text-sm block mb-0.5">{statIcons[k] || '📊'}</span>
+                  <span className="text-[6px] md:text-[7px] text-muted-foreground block">{k.toUpperCase()}</span>
+                  <span className={`text-sm md:text-base font-bold font-display ${isAbove ? 'text-rarity-advanced' : 'text-foreground'}`}>
+                    {val}
+                  </span>
+                </div>
+              );
+            })}
           </div>
           <div className="mt-2 pt-2 border-t border-game-slot-border flex justify-between text-accent font-bold text-xs">
-            <span>💰 POCKET COINS:</span>
+            <span>💰 WALLET:</span>
             <span>${coinTotal.toFixed(2)}</span>
           </div>
         </div>
