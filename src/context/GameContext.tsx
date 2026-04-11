@@ -1,0 +1,119 @@
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { type GameItem, type SlotType, itemDatabase, STANDARD_STATS } from '@/data/gameData';
+
+interface ItemLocation {
+  area: 'bag-left' | 'bag-right' | 'equipped';
+  slotType?: SlotType;
+}
+
+interface GameState {
+  gender: 'male' | 'female';
+  activeTab: string;
+  itemLocations: Record<string, ItemLocation>;
+  walletAmount: number;
+}
+
+interface GameContextType {
+  state: GameState;
+  setGender: (g: 'male' | 'female') => void;
+  setActiveTab: (t: string) => void;
+  equipItem: (itemId: string) => void;
+  unequipItem: (itemId: string) => void;
+  moveItem: (itemId: string, target: 'bag-left' | 'bag-right') => void;
+  getItemsInLocation: (area: string, slotType?: SlotType) => GameItem[];
+  getEquippedItem: (slotType: SlotType) => GameItem | undefined;
+  getCalculatedStats: () => Record<string, number>;
+  getCoinTotal: () => number;
+  getBagCount: (bag: 'bag-left' | 'bag-right') => number;
+}
+
+const GameContext = createContext<GameContextType | null>(null);
+
+export function useGame() {
+  const ctx = useContext(GameContext);
+  if (!ctx) throw new Error('useGame must be used within GameProvider');
+  return ctx;
+}
+
+export function GameProvider({ children }: { children: ReactNode }) {
+  const [state, setState] = useState<GameState>(() => {
+    const locations: Record<string, ItemLocation> = {};
+    itemDatabase.forEach((item, i) => {
+      locations[item.id] = { area: i < 10 ? 'bag-left' : 'bag-right' };
+    });
+    return { gender: 'male', activeTab: 'CHARACTER', itemLocations: locations, walletAmount: 1250 };
+  });
+
+  const setGender = useCallback((g: 'male' | 'female') => setState(s => ({ ...s, gender: g })), []);
+  const setActiveTab = useCallback((t: string) => setState(s => ({ ...s, activeTab: t })), []);
+
+  const equipItem = useCallback((itemId: string) => {
+    const item = itemDatabase.find(i => i.id === itemId);
+    if (!item) return;
+    setState(s => {
+      const locs = { ...s.itemLocations };
+      // Unequip existing item in that slot
+      const existing = Object.entries(locs).find(([, loc]) => loc.area === 'equipped' && loc.slotType === item.type);
+      if (existing) {
+        locs[existing[0]] = { area: 'bag-left' };
+      }
+      locs[itemId] = { area: 'equipped', slotType: item.type };
+      return { ...s, itemLocations: locs };
+    });
+  }, []);
+
+  const unequipItem = useCallback((itemId: string) => {
+    setState(s => ({ ...s, itemLocations: { ...s.itemLocations, [itemId]: { area: 'bag-left' } } }));
+  }, []);
+
+  const moveItem = useCallback((itemId: string, target: 'bag-left' | 'bag-right') => {
+    setState(s => ({ ...s, itemLocations: { ...s.itemLocations, [itemId]: { area: target } } }));
+  }, []);
+
+  const getItemsInLocation = useCallback((area: string, slotType?: SlotType) => {
+    return itemDatabase.filter(item => {
+      const loc = state.itemLocations[item.id];
+      if (!loc) return false;
+      if (loc.area !== area) return false;
+      if (slotType && loc.slotType !== slotType) return false;
+      return true;
+    });
+  }, [state.itemLocations]);
+
+  const getEquippedItem = useCallback((slotType: SlotType) => {
+    return itemDatabase.find(item => {
+      const loc = state.itemLocations[item.id];
+      return loc?.area === 'equipped' && loc.slotType === slotType;
+    });
+  }, [state.itemLocations]);
+
+  const getCalculatedStats = useCallback(() => {
+    const current = { ...STANDARD_STATS };
+    itemDatabase.forEach(item => {
+      const loc = state.itemLocations[item.id];
+      if (loc?.area === 'equipped') {
+        for (const [s, v] of Object.entries(item.stats)) {
+          if (s in current) current[s] += v as number;
+        }
+      }
+    });
+    return current;
+  }, [state.itemLocations]);
+
+  const getCoinTotal = useCallback(() => {
+    return itemDatabase.reduce((sum, item) => sum + item.value, 0);
+  }, []);
+
+  const getBagCount = useCallback((bag: 'bag-left' | 'bag-right') => {
+    return Object.values(state.itemLocations).filter(loc => loc.area === bag).length;
+  }, [state.itemLocations]);
+
+  return (
+    <GameContext.Provider value={{
+      state, setGender, setActiveTab, equipItem, unequipItem, moveItem,
+      getItemsInLocation, getEquippedItem, getCalculatedStats, getCoinTotal, getBagCount
+    }}>
+      {children}
+    </GameContext.Provider>
+  );
+}
