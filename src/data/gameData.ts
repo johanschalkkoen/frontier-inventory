@@ -226,4 +226,10 @@ export const itemDatabase: GameItem[] = [
   // Saddle & Specials
   { id: 'item-6', type: 'special', rarity: 'rare', category: 'edc', name: 'Western Saddle', img: saddleImg, stats: { speed: 10 }, value: 119, levelRequired: 3 },
   { id: 'item-25', type: 'special', rarity: 'epic', category: 'weapon', name: 'Dynamite', img: dynamiteImg, stats: { damage: 35 }, value: 255, levelRequired: 6, consumable: true },
+
+  // Shovel (main hand tool for digging)
+  { id: 'item-300', type: 'shovel', rarity: 'basic', category: 'edc', name: 'Rusty Shovel', img: shovelImg, stats: { damage: 3, luck: 2 }, value: 8, levelRequired: 1 },
+  { id: 'item-301', type: 'shovel', rarity: 'advanced', category: 'edc', name: 'Iron Shovel', img: shovelImg, stats: { damage: 5, luck: 5 }, value: 26, levelRequired: 3 },
+  { id: 'item-302', type: 'shovel', rarity: 'rare', category: 'edc', name: 'Prospector\'s Spade', img: shovelImg, stats: { damage: 8, luck: 10 }, value: 85, levelRequired: 6 },
+  { id: 'item-303', type: 'shovel', rarity: 'epic', category: 'edc', name: 'Gold Digger\'s Pick-Shovel', img: shovelImg, stats: { damage: 12, luck: 15 }, value: 255, levelRequired: 10 },
 ];
