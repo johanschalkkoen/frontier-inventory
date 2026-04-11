@@ -27,7 +27,6 @@ const BUY_CATEGORIES: { key: ItemCategory | 'horses' | 'tack' | 'properties'; la
   { key: 'edc', label: 'Trail Gear', icon: '🧰' },
   { key: 'medicine', label: 'Medicine', icon: '💉' },
   { key: 'luxury', label: 'Luxury', icon: '🃏' },
-  { key: 'valuable', label: 'Valuables', icon: '💰' },
   { key: 'horses', label: 'Horses', icon: '🐴' },
   { key: 'tack', label: 'Tack', icon: '🪶' },
   { key: 'properties', label: 'Land', icon: '🏚️' },
