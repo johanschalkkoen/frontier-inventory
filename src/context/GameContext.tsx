@@ -8,6 +8,7 @@ interface ItemLocation {
 
 interface GameState {
   gender: 'male' | 'female';
+  selectedCharacterId: string;
   activeTab: string;
   itemLocations: Record<string, ItemLocation>;
   walletAmount: number;
@@ -16,6 +17,7 @@ interface GameState {
 interface GameContextType {
   state: GameState;
   setGender: (g: 'male' | 'female') => void;
+  setSelectedCharacter: (id: string) => void;
   setActiveTab: (t: string) => void;
   equipItem: (itemId: string) => void;
   unequipItem: (itemId: string) => void;
@@ -41,10 +43,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
     itemDatabase.forEach((item, i) => {
       locations[item.id] = { area: i < 20 ? 'bag-left' : 'bag-right' };
     });
-    return { gender: 'male', activeTab: 'CHARACTER', itemLocations: locations, walletAmount: 1250 };
+    return { gender: 'male', selectedCharacterId: 'male-0', activeTab: 'CHARACTER', itemLocations: locations, walletAmount: 1250 };
   });
 
-  const setGender = useCallback((g: 'male' | 'female') => setState(s => ({ ...s, gender: g })), []);
+  const setGender = useCallback((g: 'male' | 'female') => {
+    setState(s => ({
+      ...s,
+      gender: g,
+      selectedCharacterId: g === 'male' ? 'male-0' : 'female-0',
+    }));
+  }, []);
+
+  const setSelectedCharacter = useCallback((id: string) => {
+    setState(s => ({ ...s, selectedCharacterId: id }));
+  }, []);
+
   const setActiveTab = useCallback((t: string) => setState(s => ({ ...s, activeTab: t })), []);
 
   const equipItem = useCallback((itemId: string) => {
@@ -52,11 +65,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (!item) return;
     setState(s => {
       const locs = { ...s.itemLocations };
-      // Unequip existing item in that slot
       const existing = Object.entries(locs).find(([, loc]) => loc.area === 'equipped' && loc.slotType === item.type);
-      if (existing) {
-        locs[existing[0]] = { area: 'bag-left' };
-      }
+      if (existing) { locs[existing[0]] = { area: 'bag-left' }; }
       locs[itemId] = { area: 'equipped', slotType: item.type };
       return { ...s, itemLocations: locs };
     });
@@ -110,7 +120,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   return (
     <GameContext.Provider value={{
-      state, setGender, setActiveTab, equipItem, unequipItem, moveItem,
+      state, setGender, setSelectedCharacter, setActiveTab, equipItem, unequipItem, moveItem,
       getItemsInLocation, getEquippedItem, getCalculatedStats, getCoinTotal, getBagCount
     }}>
       {children}

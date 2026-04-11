@@ -2,9 +2,9 @@ import { useGame } from '@/context/GameContext';
 import { StatusBar } from './StatusBar';
 import { EquipSlot } from './EquipSlot';
 import { STANDARD_STATS, type SlotType } from '@/data/gameData';
-import maleImg from '@/assets/male-character.jpg';
-import femaleImg from '@/assets/female-character.jpg';
+import { characters } from '@/data/characters';
 import { useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const leftSlots: { type: SlotType; label: string }[] = [
   { type: 'hat', label: 'Hat' }, { type: 'bandana', label: 'Mask' },
@@ -20,13 +20,22 @@ const accessorySlots: { type: SlotType; label: string }[] = [
 ];
 
 export function CharacterSection() {
-  const { state, setGender, getCalculatedStats, getCoinTotal } = useGame();
+  const { state, setGender, setSelectedCharacter, getCalculatedStats, getCoinTotal } = useGame();
   const stats = getCalculatedStats();
   const coinTotal = getCoinTotal();
 
   const [tooltip, setTooltip] = useState<{ x: number; y: number; name: string; value: number } | null>(null);
   const onHover = (e: React.MouseEvent, name: string, value: number) => setTooltip({ x: e.clientX, y: e.clientY, name, value });
   const onLeave = () => setTooltip(null);
+
+  const genderChars = characters.filter(c => c.gender === state.gender);
+  const currentChar = characters.find(c => c.id === state.selectedCharacterId) || genderChars[0];
+  const currentIdx = genderChars.findIndex(c => c.id === currentChar.id);
+
+  const cycleChar = (dir: -1 | 1) => {
+    const next = (currentIdx + dir + genderChars.length) % genderChars.length;
+    setSelectedCharacter(genderChars[next].id);
+  };
 
   const barConfigs = [
     { label: 'HEALTH', key: 'health', colorClass: 'bg-bar-health' },
@@ -62,10 +71,24 @@ export function CharacterSection() {
         <div className="flex flex-col gap-2">
           {leftSlots.map(s => <EquipSlot key={s.type} slotType={s.type} label={s.label} onHover={onHover} onLeave={onLeave} />)}
         </div>
-        <div className="w-[155px] h-[344px] bg-game-slot border-2 border-game-slot overflow-hidden">
-          <img src={state.gender === 'male' ? maleImg : femaleImg} alt="Hero"
-               className="w-full h-full object-cover" width={155} height={344} />
+
+        {/* Character sprite with arrows */}
+        <div className="flex flex-col items-center gap-1">
+          <div className="relative w-[155px] h-[344px] bg-game-slot border-2 border-game-slot overflow-hidden">
+            <img src={currentChar.img} alt={currentChar.name}
+                 className="w-full h-full object-cover" width={155} height={344} />
+            <button onClick={() => cycleChar(-1)}
+              className="absolute left-0 top-1/2 -translate-y-1/2 bg-game-slot/80 hover:bg-primary/80 p-0.5 transition-colors">
+              <ChevronLeft className="w-4 h-4 text-accent" />
+            </button>
+            <button onClick={() => cycleChar(1)}
+              className="absolute right-0 top-1/2 -translate-y-1/2 bg-game-slot/80 hover:bg-primary/80 p-0.5 transition-colors">
+              <ChevronRight className="w-4 h-4 text-accent" />
+            </button>
+          </div>
+          <span className="text-[10px] text-accent font-bold tracking-wider">{currentChar.name.toUpperCase()}</span>
         </div>
+
         <div className="flex flex-col gap-2">
           {rightSlots.map(s => <EquipSlot key={s.type} slotType={s.type} label={s.label} onHover={onHover} onLeave={onLeave} />)}
         </div>
@@ -73,6 +96,18 @@ export function CharacterSection() {
 
       <div className="flex justify-center gap-1.5 mt-2.5 p-2.5 bg-game-slot/30 rounded">
         {accessorySlots.map(s => <EquipSlot key={s.type} slotType={s.type} label={s.label} onHover={onHover} onLeave={onLeave} />)}
+      </div>
+
+      {/* Character thumbnails */}
+      <div className="flex justify-center gap-2 mt-3">
+        {genderChars.map(c => (
+          <button key={c.id} onClick={() => setSelectedCharacter(c.id)}
+            className={`w-10 h-10 border-2 overflow-hidden transition-all ${
+              c.id === state.selectedCharacterId ? 'border-accent shadow-[0_0_8px_hsl(var(--game-gold)/0.5)]' : 'border-game-slot-border opacity-60 hover:opacity-100'
+            }`}>
+            <img src={c.img} alt={c.name} className="w-full h-full object-cover object-top" width={40} height={40} />
+          </button>
+        ))}
       </div>
 
       {/* Stats Panel */}
