@@ -144,7 +144,7 @@ export function QuestsSection() {
           const isExpanded = expandedQuest === m.id;
           const playerHasHorse = hasHorse(state.itemLocations);
           const travelTime = playerHasHorse ? Math.ceil(m.durationMinutes * 0.6) : Math.ceil(m.durationMinutes * 1.5);
-          const risk = getQuestRisk(m);
+          const risk = getQuestRiskLevel(m);
 
           return (
             <div key={m.id} className={`bg-game-slot/50 p-2 mb-1.5 border border-game-slot-border/30 transition-all cursor-pointer hover:border-primary/50 ${locked ? 'opacity-40' : ''}`}
@@ -313,7 +313,7 @@ function ActiveQuestPanel() {
   const equippedSidearm = getEquippedItem('sidearm');
   const equippedLongarm = getEquippedItem('longarm');
   const isBrawl = mission.name.toLowerCase().includes('brawl') || mission.description.toLowerCase().includes('fist');
-  const risk = getQuestRisk(mission);
+  const risk = getQuestRiskLevel(mission);
 
   return (
     <div className="border-2 border-primary p-3 md:p-4 mb-4 animate-fade-in" style={{ background: 'linear-gradient(180deg, hsl(30 20% 12%) 0%, hsl(25 30% 8%) 100%)' }}>
@@ -424,11 +424,3 @@ function ActiveQuestPanel() {
   );
 }
 
-function getQuestRisk(mission: Mission) {
-  const level = mission.levelRequired;
-  const encounters = mission.encounters?.length || 0;
-  if (level >= 50 || encounters >= 5) return { label: 'EXTREME', color: 'text-destructive', energyCost: 40, healthRisk: 35 };
-  if (level >= 20 || encounters >= 3) return { label: 'HIGH', color: 'text-rarity-epic', energyCost: 25, healthRisk: 20 };
-  if (level >= 8 || encounters >= 2) return { label: 'MEDIUM', color: 'text-accent', energyCost: 15, healthRisk: 10 };
-  return { label: 'LOW', color: 'text-rarity-advanced', energyCost: 8, healthRisk: 5 };
-}
