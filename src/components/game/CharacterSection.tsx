@@ -2,7 +2,7 @@ import { useGame } from '@/context/GameContext';
 import { StatusBar } from './StatusBar';
 import { EquipSlot } from './EquipSlot';
 import { InventoryBag } from './InventoryBag';
-import { STANDARD_STATS, type SlotType } from '@/data/gameData';
+import { STANDARD_STATS, SPECIAL_DESCRIPTIONS, type SlotType } from '@/data/gameData';
 import { characters } from '@/data/characters';
 import { archetypes } from '@/data/archetypes';
 import { useState } from 'react';
@@ -12,7 +12,7 @@ const leftSlots: { type: SlotType; label: string; icon: string }[] = [
   { type: 'bandana', label: 'Bandana', icon: '≋' },
   { type: 'shirt', label: 'Shirt', icon: '⊤' },
   { type: 'outerwear', label: 'Duster', icon: '∩' },
-  { type: 'gloves', label: 'Gloves', icon: '✋' },
+  { type: 'gloves', label: 'Gloves', icon: '⊙' },
   { type: 'pants', label: 'Pants', icon: '∏' },
   { type: 'boots', label: 'Boots', icon: '⊥' },
 ];
@@ -26,8 +26,19 @@ const rightSlots: { type: SlotType; label: string; icon: string }[] = [
   { type: 'tobacco', label: 'Smoke', icon: '⊘' },
 ];
 
+const pocketBeltSlots: { type: SlotType; label: string; icon: string }[] = [
+  { type: 'pocket1', label: 'Pocket', icon: '◫' },
+  { type: 'pocket2', label: 'Pocket', icon: '◫' },
+  { type: 'pocket3', label: 'Pocket', icon: '◫' },
+  { type: 'belt1', label: 'Belt', icon: '⊷' },
+  { type: 'belt2', label: 'Belt', icon: '⊷' },
+  { type: 'belt3', label: 'Belt', icon: '⊷' },
+  { type: 'shovel', label: 'Shovel', icon: '⚒' },
+  { type: 'special', label: 'Misc', icon: '⊞' },
+];
+
 const statIcons: Record<string, string> = {
-  damage: '⚔️', defense: '🛡️', speed: '🏃', luck: '🍀', charisma: '🗣️',
+  damage: '⚔', defense: '⛊', speed: '≫', luck: '◆', charisma: '⊲',
 };
 
 export function CharacterSection() {
@@ -55,7 +66,7 @@ export function CharacterSection() {
           </h1>
           <button onClick={() => setActiveTab('PROFILE')}
             className="px-2 py-0.5 bg-primary/20 border border-primary text-primary text-[9px] font-bold hover:bg-primary/40 transition-colors">
-            👤 Profile
+            ▸ Profile
           </button>
         </div>
 
@@ -67,7 +78,7 @@ export function CharacterSection() {
         <div className="mb-3 bg-game-slot/50 p-2 border-2 border-game-slot-border"
           style={{ borderImage: 'linear-gradient(135deg, hsl(var(--accent)/0.5), hsl(var(--primary)/0.3)) 1' }}>
           <div className="flex justify-between items-center mb-1">
-            <span className="text-accent font-display font-bold text-sm">⭐ LEVEL {level}</span>
+            <span className="text-accent font-display font-bold text-sm">★ LEVEL {level}</span>
             <span className="text-[9px] text-muted-foreground">{currentXp} / {xpToNext} XP</span>
           </div>
           <div className="h-4 bg-game-slot border border-game-slot-border rounded-sm overflow-hidden relative"
@@ -83,12 +94,17 @@ export function CharacterSection() {
           </div>
         </div>
 
-        {/* Status Bars */}
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <StatusBar label="HEALTH" value={stats.health || 100} max={100} colorClass="bg-bar-health" icon="❤️" />
-          <StatusBar label="ENERGY" value={stats.energy || 100} max={100} colorClass="bg-bar-energy" icon="⚡" />
-          <StatusBar label="QUENCH" value={stats.thirst || 100} max={100} colorClass="bg-bar-thirst" icon="💧" />
-          <StatusBar label="SLEEP" value={stats.sleep || 100} max={100} colorClass="bg-bar-sleep" icon="🌙" />
+        {/* Vital Status Bars */}
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          <StatusBar label="HEALTH" value={state.vitals.health} max={100} colorClass="bg-bar-health" icon="♥" />
+          <StatusBar label="ENERGY" value={state.vitals.energy} max={100} colorClass="bg-bar-energy" icon="≡" />
+          <StatusBar label="QUENCH" value={state.vitals.thirst} max={100} colorClass="bg-bar-thirst" icon="◈" />
+          <StatusBar label="SLEEP" value={state.vitals.sleep} max={100} colorClass="bg-bar-sleep" icon="◑" />
+        </div>
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          <StatusBar label="HUNGER" value={state.vitals.hunger} max={100} colorClass="bg-bar-energy" icon="∞" />
+          <StatusBar label="MORALE" value={state.vitals.morale} max={100} colorClass="bg-bar-health" icon="★" />
+          <StatusBar label="HYGIENE" value={state.vitals.hygiene} max={100} colorClass="bg-bar-thirst" icon="◇" />
         </div>
 
         {/* Equipment layout */}
@@ -126,11 +142,29 @@ export function CharacterSection() {
           </div>
         </div>
 
-        {/* Misc slot */}
-        <div className="flex justify-center gap-2 mt-3 p-2 bg-game-slot/20 border border-game-slot-border/30"
-          style={{ borderImage: 'linear-gradient(90deg, transparent, hsl(var(--primary)/0.3), transparent) 1' }}>
-          <EquipSlot slotType="special" label="Misc" icon="⊞" onHover={onHover} onLeave={onLeave} />
-          <EquipSlot slotType="shovel" label="Shovel" icon="⚒" onHover={onHover} onLeave={onLeave} />
+        {/* Pockets & Belt section */}
+        <div className="mt-3 p-2 bg-game-slot/30 border-2 border-game-slot-border"
+          style={{ borderImage: 'linear-gradient(90deg, hsl(var(--accent)/0.3), hsl(var(--primary)/0.4), hsl(var(--accent)/0.3)) 1' }}>
+          <div className="text-[8px] text-primary font-bold tracking-wider mb-1.5 text-center">POCKETS · BELT · TOOLS</div>
+          <div className="flex justify-center gap-1.5 flex-wrap">
+            {pocketBeltSlots.map(s => <EquipSlot key={s.type} slotType={s.type} label={s.label} icon={s.icon} onHover={onHover} onLeave={onLeave} />)}
+          </div>
+        </div>
+
+        {/* SPECIAL Stats */}
+        <div className="mt-3 bg-game-slot/60 p-2 md:p-3 border-2 border-game-slot-border"
+          style={{ borderImage: 'linear-gradient(180deg, hsl(var(--accent)/0.5), hsl(var(--primary)/0.3)) 1' }}>
+          <div className="text-[9px] text-accent font-display font-bold tracking-widest mb-2">S.P.E.C.I.A.L</div>
+          <div className="grid grid-cols-7 gap-1">
+            {(Object.keys(SPECIAL_DESCRIPTIONS) as (keyof typeof SPECIAL_DESCRIPTIONS)[]).map(key => (
+              <div key={key} className="bg-game-slot/80 border border-game-slot-border p-1 text-center group relative"
+                title={SPECIAL_DESCRIPTIONS[key].desc}>
+                <span className="text-accent font-display font-bold text-sm block">{SPECIAL_DESCRIPTIONS[key].icon}</span>
+                <span className="text-foreground font-bold text-base font-display">{state.special[key]}</span>
+                <span className="text-[5px] text-muted-foreground block">{key.slice(0, 3).toUpperCase()}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Quick Stats */}
@@ -144,7 +178,7 @@ export function CharacterSection() {
               return (
                 <div key={k} className="bg-game-slot/80 border border-game-slot-border p-1 md:p-1.5 text-center relative overflow-hidden"
                   style={{ borderImage: isAbove ? 'linear-gradient(135deg, hsl(120 50% 45% / 0.4), transparent) 1' : undefined }}>
-                  <span className="text-xs md:text-sm block mb-0.5">{statIcons[k] || '📊'}</span>
+                  <span className="text-xs md:text-sm block mb-0.5 font-display text-primary">{statIcons[k] || '▪'}</span>
                   <span className="text-[6px] md:text-[7px] text-muted-foreground block">{k.toUpperCase()}</span>
                   <span className={`text-sm md:text-base font-bold font-display ${isAbove ? 'text-rarity-advanced' : 'text-foreground'}`}>
                     {val}
@@ -153,6 +187,23 @@ export function CharacterSection() {
               );
             })}
           </div>
+
+          {/* Western Justice quick view */}
+          <div className="mt-2 pt-2 border-t border-game-slot-border grid grid-cols-3 gap-1.5">
+            <div className="text-center">
+              <span className="text-[7px] text-muted-foreground block">WANTED</span>
+              <span className="text-accent font-bold text-xs">{'★'.repeat(state.justice.wantedLevel)}{'☆'.repeat(5 - state.justice.wantedLevel)}</span>
+            </div>
+            <div className="text-center">
+              <span className="text-[7px] text-muted-foreground block">HONOR</span>
+              <span className="text-foreground font-bold text-xs">{state.justice.honor}</span>
+            </div>
+            <div className="text-center">
+              <span className="text-[7px] text-muted-foreground block">BOUNTY</span>
+              <span className="text-destructive font-bold text-xs">${state.justice.bounty}</span>
+            </div>
+          </div>
+
           <div className="mt-2 pt-2 border-t border-game-slot-border flex justify-between text-accent font-bold text-xs">
             <span>$ WALLET:</span>
             <span>${coinTotal.toFixed(2)}</span>

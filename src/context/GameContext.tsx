@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
-import { type GameItem, type SlotType, itemDatabase, STANDARD_STATS } from '@/data/gameData';
+import { type GameItem, type SlotType, itemDatabase, STANDARD_STATS, DEFAULT_SPECIAL, DEFAULT_VITALS, DEFAULT_JUSTICE, DEFAULT_GAMEPLAY, DEFAULT_SKILLS, type SpecialStats, type VitalStats, type JusticeStats, type GameplayStats, type PlayerSkills } from '@/data/gameData';
 import { getLevelFromXp, mapRegions, type Mission, type MissionEncounter } from '@/data/mapData';
 import { useAuth } from './AuthContext';
 import { loadProgress, saveProgress, type SaveData } from '@/lib/progressSync';
@@ -13,8 +13,8 @@ interface ItemLocation {
 
 export interface ActiveQuest {
   missionId: string;
-  startTime: number; // timestamp
-  endTime: number; // timestamp
+  startTime: number;
+  endTime: number;
   encounters: MissionEncounter[];
   currentEncounterIndex: number;
   status: 'traveling' | 'encounter' | 'completed' | 'failed';
@@ -35,6 +35,12 @@ interface GameState {
   archetypeId: string;
   traitPoints: Record<string, number>;
   activeQuest: ActiveQuest | null;
+  // New stats systems
+  special: SpecialStats;
+  vitals: VitalStats;
+  justice: JusticeStats;
+  gameplay: GameplayStats;
+  skills: PlayerSkills;
 }
 
 interface GameContextType {
@@ -86,19 +92,21 @@ function defaultState(): GameState {
     archetypeId: 'jace',
     traitPoints: {},
     activeQuest: null,
+    special: { ...DEFAULT_SPECIAL },
+    vitals: { ...DEFAULT_VITALS },
+    justice: { ...DEFAULT_JUSTICE },
+    gameplay: { ...DEFAULT_GAMEPLAY },
+    skills: { ...DEFAULT_SKILLS },
   };
 }
 
-// Generate random encounters for a mission based on level
 function generateQuestEncounters(mission: Mission, playerLevel: number): MissionEncounter[] {
   if (mission.encounters && mission.encounters.length > 0) {
-    // Scale difficulty to player level
     return mission.encounters.map(e => ({
       ...e,
       difficulty: Math.max(1, e.difficulty + Math.floor((playerLevel - mission.levelRequired) * 0.3)),
     }));
   }
-  // Generate random encounters
   const count = Math.min(1 + Math.floor(mission.levelRequired / 5), 5);
   const types: MissionEncounter['type'][] = ['bandits', 'wildlife', 'weather', 'terrain'];
   const names: Record<string, string[]> = {
@@ -121,6 +129,16 @@ function generateQuestEncounters(mission: Mission, playerLevel: number): Mission
   return result;
 }
 
+// Calculate quest stat costs based on risk level
+function getQuestCosts(mission: Mission) {
+  const level = mission.levelRequired;
+  const encounters = mission.encounters?.length || 0;
+  if (level >= 50 || encounters >= 5) return { energy: 40, health: 35, hunger: 25, thirst: 30, sleep: 20, morale: -15 };
+  if (level >= 20 || encounters >= 3) return { energy: 25, health: 20, hunger: 18, thirst: 20, sleep: 15, morale: -10 };
+  if (level >= 8 || encounters >= 2) return { energy: 15, health: 10, hunger: 12, thirst: 12, sleep: 8, morale: -5 };
+  return { energy: 8, health: 5, hunger: 8, thirst: 8, sleep: 5, morale: 5 };
+}
+
 export function GameProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [state, setState] = useState<GameState>(defaultState);
@@ -138,7 +156,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       loadProgress(user.id),
       supabase
         .from('player_characters')
-        .select('character_name, archetype_id, portrait_id, trait_points')
+        .select('character_name, archetype_id, portrait_id, trait_points, skill_points')
         .eq('user_id', user.id)
         .eq('is_active', true)
         .limit(1)
@@ -248,6 +266,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     for (const key of Object.keys(current)) {
       current[key] += (playerLevel.level - 1) * 2;
     }
+    // Apply SPECIAL bonuses
+    current['health'] += (state.special.endurance - 5) * 20;
+    current['energy'] += (state.special.endurance - 5) * 10;
+    current['damage'] += (state.special.strength - 5) * 3;
+    current['speed'] += (state.special.agility - 5) * 3;
+    current['luck'] += (state.special.luck - 5) * 3;
+    current['charisma'] += (state.special.charisma - 5) * 3;
+    current['defense'] += (state.special.strength - 5) * 2;
+
     const arch = archetypes.find(a => a.id === state.archetypeId);
     if (arch) {
       for (const [s, v] of Object.entries(arch.bonusStats)) {
@@ -271,7 +298,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     });
     return current;
-  }, [state.itemLocations, state.totalXp, state.archetypeId, state.traitPoints]);
+  }, [state.itemLocations, state.totalXp, state.archetypeId, state.traitPoints, state.special]);
 
   const getCoinTotal = useCallback(() => {
     return itemDatabase.reduce((sum, item) => {
@@ -292,7 +319,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const startMission = useCallback((missionId: string): boolean => {
     let started = false;
     setState(s => {
-      // Can't start if already on a quest
       if (s.activeQuest && s.activeQuest.status !== 'completed' && s.activeQuest.status !== 'failed') return s;
       if (s.completedMissions.includes(missionId)) return s;
 
@@ -307,6 +333,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const playerLevel = getLevelFromXp(s.totalXp).level;
       if (playerLevel < mission.levelRequired) return s;
 
+      // Deduct initial energy for starting quest
+      const costs = getQuestCosts(mission);
+      const newVitals = { ...s.vitals };
+      newVitals.energy = Math.max(0, newVitals.energy - Math.floor(costs.energy * 0.3));
+      newVitals.hunger = Math.max(0, newVitals.hunger - Math.floor(costs.hunger * 0.2));
+      newVitals.thirst = Math.max(0, newVitals.thirst - Math.floor(costs.thirst * 0.2));
+
       const encounters = generateQuestEncounters(mission, playerLevel);
       const now = Date.now();
       const durationMs = (mission.durationMinutes || 2) * 60 * 1000;
@@ -314,6 +347,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       started = true;
       return {
         ...s,
+        vitals: newVitals,
         activeQuest: {
           missionId,
           startTime: now,
@@ -321,7 +355,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           encounters,
           currentEncounterIndex: 0,
           status: 'traveling',
-          log: [`📋 Quest started: ${mission.name}`, `⏱ Estimated time: ${mission.durationMinutes} minutes`],
+          log: [`-- Quest started: ${mission.name}`, `-- Estimated time: ${mission.durationMinutes} minutes`],
           regionId,
         },
       };
@@ -341,6 +375,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const playerLevel = getLevelFromXp(s.totalXp);
         const current = { ...STANDARD_STATS };
         for (const key of Object.keys(current)) current[key] += (playerLevel.level - 1) * 2;
+        current['damage'] += (s.special.strength - 5) * 3;
+        current['speed'] += (s.special.agility - 5) * 3;
+        current['luck'] += (s.special.luck - 5) * 3;
         itemDatabase.forEach(item => {
           const loc = s.itemLocations[item.id];
           if (loc?.area === 'equipped') {
@@ -355,53 +392,93 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const playerPower = (stats.damage || 10) + (stats.defense || 0) + (stats.speed || 0) + (stats.luck || 0);
       const encounterPower = encounter.difficulty * 15 + Math.random() * 20;
 
+      // Apply encounter stat costs
+      const newVitals = { ...s.vitals };
       let success = false;
+
       if (action === 'fight') {
         success = playerPower + Math.random() * 30 > encounterPower;
+        // Fighting costs more energy and health
+        newVitals.energy = Math.max(0, newVitals.energy - (5 + encounter.difficulty));
+        newVitals.hunger = Math.max(0, newVitals.hunger - 3);
+        newVitals.thirst = Math.max(0, newVitals.thirst - 4);
+        if (!success) {
+          newVitals.health = Math.max(0, newVitals.health - (10 + encounter.difficulty * 2));
+          newVitals.morale = Math.max(0, newVitals.morale - 8);
+        } else {
+          newVitals.health = Math.max(0, newVitals.health - Math.floor(encounter.difficulty * 0.5));
+          newVitals.morale = Math.min(100, newVitals.morale + 3);
+        }
       } else if (action === 'evade') {
-        // Evade uses speed + luck, harder than fight
         const evadePower = (stats.speed || 5) * 2 + (stats.luck || 0) * 1.5;
         success = evadePower + Math.random() * 25 > encounterPower * 0.8;
+        newVitals.energy = Math.max(0, newVitals.energy - (8 + encounter.difficulty));
+        newVitals.thirst = Math.max(0, newVitals.thirst - 3);
+        if (!success) {
+          newVitals.health = Math.max(0, newVitals.health - (5 + encounter.difficulty));
+          newVitals.morale = Math.max(0, newVitals.morale - 5);
+        }
       } else if (action === 'flee') {
-        // Flee: high chance but lose some progress
         success = (stats.speed || 5) + Math.random() * 40 > encounterPower * 0.5;
+        newVitals.energy = Math.max(0, newVitals.energy - (10 + encounter.difficulty));
+        newVitals.morale = Math.max(0, newVitals.morale - 10);
+        newVitals.thirst = Math.max(0, newVitals.thirst - 5);
+        if (!success) {
+          newVitals.health = Math.max(0, newVitals.health - (8 + encounter.difficulty * 1.5));
+        }
       }
 
       if (success) {
         const actionWord = action === 'fight' ? 'VICTORY' : action === 'evade' ? 'EVADED' : 'ESCAPED';
-        quest.log = [...quest.log, `${action === 'fight' ? '⚔️' : '🏃'} ${encounter.name}: ${actionWord}!`];
+        quest.log = [...quest.log, `${action === 'fight' ? '++ ' : '>> '}${encounter.name}: ${actionWord}!`];
         quest.currentEncounterIndex++;
         quest.status = 'traveling';
         if (quest.currentEncounterIndex >= quest.encounters.length) {
-          quest.log = [...quest.log, '🏇 All encounters cleared! Heading to destination...'];
+          quest.log = [...quest.log, '>> All encounters cleared! Heading to destination...'];
         }
         result = 'success';
       } else {
         quest.status = 'failed';
-        quest.log = [...quest.log, `💀 ${encounter.name}: DEFEATED! You were injured and had to retreat.`];
+        quest.log = [...quest.log, `XX ${encounter.name}: DEFEATED! You were injured and had to retreat.`];
         result = 'fail';
       }
 
-      return { ...s, activeQuest: quest };
+      return { ...s, activeQuest: quest, vitals: newVitals };
     });
     return result;
   }, []);
 
   const abortQuest = useCallback(() => {
-    setState(s => ({ ...s, activeQuest: null }));
+    setState(s => {
+      const newVitals = { ...s.vitals };
+      newVitals.morale = Math.max(0, newVitals.morale - 15);
+      newVitals.energy = Math.max(0, newVitals.energy - 10);
+      return { ...s, activeQuest: null, vitals: newVitals };
+    });
   }, []);
 
   const useHealItem = useCallback((itemId: string) => {
     setState(s => {
       if (!s.itemLocations[itemId]) return s;
+      const item = itemDatabase.find(i => i.id === itemId);
       const newLocs = { ...s.itemLocations };
       delete newLocs[itemId];
-      // Heal effect is implicit - item consumed
+      // Apply item stats to vitals
+      const newVitals = { ...s.vitals };
+      if (item) {
+        if (item.stats.health) newVitals.health = Math.min(100, Math.max(0, newVitals.health + item.stats.health));
+        if (item.stats.energy) newVitals.energy = Math.min(100, Math.max(0, newVitals.energy + item.stats.energy));
+        if (item.stats.thirst) newVitals.thirst = Math.min(100, Math.max(0, newVitals.thirst + item.stats.thirst));
+        if (item.stats.sleep) newVitals.sleep = Math.min(100, Math.max(0, newVitals.sleep + item.stats.sleep));
+        if (item.stats.hunger) newVitals.hunger = Math.min(100, Math.max(0, newVitals.hunger + item.stats.hunger));
+        if (item.stats.morale) newVitals.morale = Math.min(100, Math.max(0, newVitals.morale + item.stats.morale));
+        if (item.stats.hygiene) newVitals.hygiene = Math.min(100, Math.max(0, newVitals.hygiene + item.stats.hygiene));
+      }
       const quest = s.activeQuest ? {
         ...s.activeQuest,
-        log: [...s.activeQuest.log, `❤️ Used ${itemDatabase.find(i => i.id === itemId)?.name || 'item'} to restore health.`],
+        log: [...s.activeQuest.log, `++ Used ${item?.name || 'item'} to restore vitals.`],
       } : null;
-      return { ...s, itemLocations: newLocs, activeQuest: quest };
+      return { ...s, itemLocations: newLocs, activeQuest: quest, vitals: newVitals };
     });
   }, []);
 
@@ -454,12 +531,49 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (mission) break;
       }
       if (!mission) return s;
+
+      // Apply completion costs to vitals
+      const costs = getQuestCosts(mission);
+      const newVitals = { ...s.vitals };
+      newVitals.energy = Math.max(0, newVitals.energy - costs.energy);
+      newVitals.health = Math.max(0, newVitals.health - costs.health);
+      newVitals.hunger = Math.max(0, newVitals.hunger - costs.hunger);
+      newVitals.thirst = Math.max(0, newVitals.thirst - costs.thirst);
+      newVitals.sleep = Math.max(0, newVitals.sleep - costs.sleep);
+      newVitals.morale = Math.min(100, Math.max(0, newVitals.morale + 10)); // completing boosts morale
+
+      // Update skills based on quest type
+      const newSkills = { ...s.skills };
+      if (mission.type === 'Combat' || mission.type === 'Bounty') {
+        newSkills.pistols = Math.min(100, newSkills.pistols + 1);
+        newSkills.rifles = Math.min(100, newSkills.rifles + 1);
+        newSkills.unarmed = Math.min(100, newSkills.unarmed + 1);
+      }
+      if (mission.type === 'Escort' || mission.type === 'Delivery') {
+        newSkills.horsemanship = Math.min(100, newSkills.horsemanship + 1);
+        newSkills.survival = Math.min(100, newSkills.survival + 1);
+      }
+      if (mission.type === 'Investigation') {
+        newSkills.speech = Math.min(100, newSkills.speech + 1);
+        newSkills.firstAid = Math.min(100, newSkills.firstAid + 1);
+      }
+
+      // Justice impact
+      const newJustice = { ...s.justice };
+      if (mission.type === 'Bounty') {
+        newJustice.honor = Math.min(100, newJustice.honor + 2);
+        newJustice.gunReputation = Math.min(100, newJustice.gunReputation + 3);
+      }
+
       return {
         ...s,
         completedMissions: [...s.completedMissions, missionId],
         totalXp: s.totalXp + mission.xpReward,
         walletAmount: s.walletAmount + mission.coinReward,
         activeQuest: null,
+        vitals: newVitals,
+        skills: newSkills,
+        justice: newJustice,
       };
     });
   }, []);
