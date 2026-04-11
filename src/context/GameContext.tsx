@@ -58,7 +58,9 @@ interface GameContextType {
   buyItem: (itemId: string, price: number) => boolean;
   sellItem: (itemId: string, sellPrice: number) => boolean;
   hasItem: (itemId: string) => boolean;
-  processEncounter: () => 'success' | 'fail' | 'none';
+  processEncounter: (action: 'fight' | 'evade' | 'flee') => 'success' | 'fail' | 'none';
+  abortQuest: () => void;
+  useHealItem: (itemId: string) => void;
   loaded: boolean;
 }
 
