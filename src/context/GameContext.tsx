@@ -204,9 +204,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const getCalculatedStats = useCallback(() => {
     const playerLevel = getLevelFromXp(state.totalXp);
     const current = { ...STANDARD_STATS };
+    // Level bonuses
     for (const key of Object.keys(current)) {
       current[key] += (playerLevel.level - 1) * 2;
     }
+    // Archetype bonuses
+    const arch = archetypes.find(a => a.id === state.archetypeId);
+    if (arch) {
+      for (const [s, v] of Object.entries(arch.bonusStats)) {
+        if (s in current) current[s] += v;
+      }
+    }
+    // Trait point bonuses
+    for (const [traitName, pts] of Object.entries(state.traitPoints)) {
+      const mapping = TRAIT_STAT_MAP[traitName as TraitCategory];
+      if (mapping && typeof pts === 'number') {
+        for (const [stat, mult] of Object.entries(mapping)) {
+          if (stat in current) current[stat] += pts * mult;
+        }
+      }
+    }
+    // Equipment bonuses
     itemDatabase.forEach(item => {
       const loc = state.itemLocations[item.id];
       if (loc?.area === 'equipped') {
@@ -216,7 +234,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     });
     return current;
-  }, [state.itemLocations, state.totalXp]);
+  }, [state.itemLocations, state.totalXp, state.archetypeId, state.traitPoints]);
 
   const getCoinTotal = useCallback(() => {
     return itemDatabase.reduce((sum, item) => sum + item.value, 0);
