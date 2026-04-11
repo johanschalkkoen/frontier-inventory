@@ -553,7 +553,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         newSkills.horsemanship = Math.min(100, newSkills.horsemanship + 1);
         newSkills.survival = Math.min(100, newSkills.survival + 1);
       }
-      if (mission.type === 'Rescue' || mission.type === 'Investigation') {
+      if (mission.type === 'Investigation') {
         newSkills.speech = Math.min(100, newSkills.speech + 1);
         newSkills.firstAid = Math.min(100, newSkills.firstAid + 1);
       }
