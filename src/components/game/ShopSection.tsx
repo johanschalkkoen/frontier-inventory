@@ -19,17 +19,17 @@ const MAIN_TABS = ['Buy', 'Sell'] as const;
 type MainTab = typeof MAIN_TABS[number];
 
 const BUY_CATEGORIES: { key: ItemCategory | 'horses' | 'tack' | 'properties'; label: string; icon: string }[] = [
-  { key: 'clothing', label: 'Apparel', icon: '🤠' },
-  { key: 'weapon', label: 'Weapons', icon: '⚔️' },
-  { key: 'ammo', label: 'Ammo', icon: '🎯' },
-  { key: 'food', label: 'Provisions', icon: '🥩' },
-  { key: 'drink', label: 'Drinks', icon: '🥃' },
-  { key: 'edc', label: 'Trail Gear', icon: '🧰' },
-  { key: 'medicine', label: 'Medicine', icon: '💉' },
-  { key: 'luxury', label: 'Luxury', icon: '🃏' },
-  { key: 'horses', label: 'Horses', icon: '🐴' },
-  { key: 'tack', label: 'Tack', icon: '🪶' },
-  { key: 'properties', label: 'Land', icon: '🏚️' },
+  { key: 'clothing', label: 'Apparel', icon: '⌐' },
+  { key: 'weapon', label: 'Weapons', icon: '⌁' },
+  { key: 'ammo', label: 'Ammo', icon: '•' },
+  { key: 'food', label: 'Provisions', icon: '≡' },
+  { key: 'drink', label: 'Drinks', icon: '◉' },
+  { key: 'edc', label: 'Trail Gear', icon: '⊞' },
+  { key: 'medicine', label: 'Medicine', icon: '+' },
+  { key: 'luxury', label: 'Luxury', icon: '✦' },
+  { key: 'horses', label: 'Horses', icon: '⊳' },
+  { key: 'tack', label: 'Tack', icon: '∿' },
+  { key: 'properties', label: 'Land', icon: '⌂' },
 ];
 
 const SHOP_FILTERS = [

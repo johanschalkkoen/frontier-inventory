@@ -45,7 +45,7 @@ export function EquipSlot({ slotType, label, icon, onHover, onLeave }: EquipSlot
           />
         ) : (
           <div className="flex flex-col items-center gap-0.5 opacity-50 group-hover:opacity-70 transition-opacity">
-            <span className="text-base drop-shadow-sm">{icon}</span>
+            <span className="text-base drop-shadow-sm font-display text-primary">{icon}</span>
             <span className="text-[6px] text-muted-foreground font-bold tracking-wider uppercase">{label}</span>
           </div>
         )}
