@@ -280,19 +280,16 @@ function ActiveQuestPanel() {
   const expectedEncounters = Math.min(quest.encounters.length, Math.floor(elapsed / encounterInterval));
   const needsEncounter = quest.status === 'traveling' && quest.currentEncounterIndex < expectedEncounters;
 
-  if (!mission) return null;
-
-  // Auto-complete when timer runs out and all encounters cleared
   const timerDone = timeLeft <= 0;
   const allEncountersCleared = quest.currentEncounterIndex >= quest.encounters.length;
-  const isComplete = (timerDone && allEncountersCleared) || (progress >= 100 && allEncountersCleared);
+  const isComplete = mission ? ((timerDone && allEncountersCleared) || (progress >= 100 && allEncountersCleared)) : false;
   const currentEncounter = quest.encounters[quest.currentEncounterIndex];
   const showEncounter = needsEncounter && currentEncounter;
-  const story = getQuestStory(quest.missionId, mission);
+  const story = mission ? getQuestStory(quest.missionId, mission) : { story: '', people: '', location: '' };
 
   // Auto-complete effect
   useEffect(() => {
-    if (isComplete && quest.status !== 'completed' && quest.status !== 'failed') {
+    if (mission && isComplete && quest.status !== 'completed' && quest.status !== 'failed') {
       completeMission(quest.missionId);
       toast.success(`Quest complete: ${mission.name}! +${mission.xpReward} XP · $${mission.coinReward}`);
     }
