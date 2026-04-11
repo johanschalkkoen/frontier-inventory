@@ -20,6 +20,10 @@ interface GameState {
   totalXp: number;
   completedMissions: string[];
   selectedRegionId: string | null;
+  // Character creation data
+  characterName: string;
+  archetypeId: string;
+  traitPoints: Record<string, number>;
 }
 
 interface GameContextType {
