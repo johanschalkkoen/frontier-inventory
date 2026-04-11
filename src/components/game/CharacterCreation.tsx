@@ -1,7 +1,12 @@
 import { useState, useMemo } from 'react';
 import { characters } from '@/data/characters';
 import { archetypes, TRAIT_CATEGORIES, TOTAL_TRAIT_POINTS, MAX_PER_TRAIT, type TraitCategory } from '@/data/archetypes';
+import { DEFAULT_SPECIAL, SPECIAL_DESCRIPTIONS, DEFAULT_SKILLS, SKILL_CATEGORIES, SKILL_ICONS, type SpecialStats, type PlayerSkills } from '@/data/gameData';
 import { ChevronLeft, ChevronRight, Minus, Plus } from 'lucide-react';
+
+const TOTAL_SPECIAL_POINTS = 28;
+const MIN_SPECIAL = 1;
+const MAX_SPECIAL = 10;
 
 interface CharacterCreationProps {
   onComplete: (data: {
@@ -9,11 +14,12 @@ interface CharacterCreationProps {
     archetypeId: string;
     portraitId: string;
     traitPoints: Record<string, number>;
+    special?: SpecialStats;
   }) => void;
 }
 
 export function CharacterCreation({ onComplete }: CharacterCreationProps) {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [characterName, setCharacterName] = useState('');
   const [selectedGender, setSelectedGender] = useState<'male' | 'female'>('male');
   const [selectedArchetype, setSelectedArchetype] = useState(archetypes.find(a => a.gender === 'male')!.id);
@@ -21,22 +27,19 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
   const [traitPoints, setTraitPoints] = useState<Record<TraitCategory, number>>(
     Object.fromEntries(TRAIT_CATEGORIES.map(t => [t, 0])) as Record<TraitCategory, number>
   );
+  const [special, setSpecial] = useState<SpecialStats>({
+    strength: 4, perception: 4, endurance: 4, charisma: 4, intelligence: 4, agility: 4, luck: 4,
+  });
 
   const archetype = archetypes.find(a => a.id === selectedArchetype)!;
   const portrait = characters.find(c => c.id === selectedPortrait)!;
   const pointsUsed = Object.values(traitPoints).reduce((s, v) => s + v, 0);
   const pointsLeft = TOTAL_TRAIT_POINTS - pointsUsed;
+  const specialUsed = Object.values(special).reduce((s, v) => s + v, 0);
+  const specialLeft = TOTAL_SPECIAL_POINTS - specialUsed;
 
-  // Filter portraits and archetypes by selected gender
-  const genderPortraits = useMemo(() =>
-    characters.filter(c => c.gender === selectedGender),
-    [selectedGender]
-  );
-
-  const genderArchetypes = useMemo(() =>
-    archetypes.filter(a => a.gender === selectedGender),
-    [selectedGender]
-  );
+  const genderPortraits = useMemo(() => characters.filter(c => c.gender === selectedGender), [selectedGender]);
+  const genderArchetypes = useMemo(() => archetypes.filter(a => a.gender === selectedGender), [selectedGender]);
 
   const handleGenderChange = (gender: 'male' | 'female') => {
     setSelectedGender(gender);
@@ -56,38 +59,56 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
     });
   };
 
+  const adjustSpecial = (key: keyof SpecialStats, delta: number) => {
+    setSpecial(prev => {
+      const newVal = prev[key] + delta;
+      if (newVal < MIN_SPECIAL || newVal > MAX_SPECIAL) return prev;
+      const newUsed = specialUsed + delta;
+      if (newUsed > TOTAL_SPECIAL_POINTS) return prev;
+      return { ...prev, [key]: newVal };
+    });
+  };
+
+  // Calculate derived stats from SPECIAL
+  const derivedHealth = 100 + (special.endurance - 5) * 20;
+  const derivedDamage = 5 + (special.strength - 5) * 3;
+  const derivedSpeed = 10 + (special.agility - 5) * 3;
+
   const handleComplete = () => {
     if (!characterName.trim()) return;
     onComplete({
       characterName: characterName.trim(),
       archetypeId: selectedArchetype,
       portraitId: selectedPortrait,
-      traitPoints: traitPoints,
+      traitPoints,
+      special,
     });
   };
 
   const canProceed = step === 1 ? characterName.trim().length > 0 : true;
+  const totalSteps = 5;
+  const stepLabels = ['Name & Portrait', 'Choose Your Path', 'S.P.E.C.I.A.L', 'Allocate Traits', 'Final Summary'];
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-2xl bg-game-container border-4 border-game-slot shadow-[0_0_50px_rgba(0,0,0,0.8)] p-6">
+      <div className="w-full max-w-2xl bg-game-container border-4 border-game-slot shadow-[0_0_50px_rgba(0,0,0,0.8)] p-6 max-h-[90vh] overflow-y-auto">
         <h1 className="font-display text-2xl font-black text-accent tracking-wider text-center mb-1 drop-shadow-[2px_2px_0px_rgba(0,0,0,0.8)]">
           Create Your Legend
         </h1>
         <p className="text-center text-muted-foreground text-xs mb-5">
-          Step {step} of 3 — {step === 1 ? 'Name & Portrait' : step === 2 ? 'Choose Your Path' : 'Allocate Traits'}
+          Step {step} of {totalSteps} — {stepLabels[step - 1]}
         </p>
 
         {/* Step indicators */}
-        <div className="flex justify-center gap-2 mb-6">
-          {[1, 2, 3].map(s => (
-            <div key={s} className={`w-16 h-1 rounded-sm transition-all ${s <= step ? 'bg-accent' : 'bg-game-slot-border'}`} />
+        <div className="flex justify-center gap-1.5 mb-6">
+          {Array.from({ length: totalSteps }).map((_, i) => (
+            <div key={i} className={`w-12 h-1 rounded-sm transition-all ${i < step ? 'bg-accent' : 'bg-game-slot-border'}`} />
           ))}
         </div>
 
+        {/* STEP 1: Name & Portrait */}
         {step === 1 && (
           <div className="space-y-5">
-            {/* Name Input */}
             <div>
               <label className="block text-accent font-display font-bold text-sm mb-2">CHARACTER NAME</label>
               <input
@@ -101,34 +122,22 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
               <span className="text-[9px] text-muted-foreground mt-1 block">{characterName.length}/24</span>
             </div>
 
-            {/* Gender Selector */}
             <div>
               <label className="block text-accent font-display font-bold text-sm mb-2">GENDER</label>
               <div className="flex gap-2">
-                <button
-                  onClick={() => handleGenderChange('male')}
-                  className={`flex-1 py-2.5 text-sm font-bold font-display border-2 transition-all ${
-                    selectedGender === 'male'
-                      ? 'bg-primary border-accent text-primary-foreground'
-                      : 'bg-game-slot-border border-game-slot text-foreground hover:bg-secondary'
-                  }`}
-                >
-                  ♂ MALE
-                </button>
-                <button
-                  onClick={() => handleGenderChange('female')}
-                  className={`flex-1 py-2.5 text-sm font-bold font-display border-2 transition-all ${
-                    selectedGender === 'female'
-                      ? 'bg-primary border-accent text-primary-foreground'
-                      : 'bg-game-slot-border border-game-slot text-foreground hover:bg-secondary'
-                  }`}
-                >
-                  ♀ FEMALE
-                </button>
+                {(['male', 'female'] as const).map(g => (
+                  <button key={g} onClick={() => handleGenderChange(g)}
+                    className={`flex-1 py-2.5 text-sm font-bold font-display border-2 transition-all ${
+                      selectedGender === g
+                        ? 'bg-primary border-accent text-primary-foreground'
+                        : 'bg-game-slot-border border-game-slot text-foreground hover:bg-secondary'
+                    }`}>
+                    {g === 'male' ? '♂ MALE' : '♀ FEMALE'}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Portrait Picker - filtered by gender */}
             <div>
               <label className="block text-accent font-display font-bold text-sm mb-2">CHOOSE YOUR LOOK</label>
               <div className="flex gap-4 items-center justify-center">
@@ -138,15 +147,12 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
               </div>
               <div className="flex justify-center gap-2 mt-3 flex-wrap">
                 {genderPortraits.map(c => (
-                  <button
-                    key={c.id}
-                    onClick={() => setSelectedPortrait(c.id)}
+                  <button key={c.id} onClick={() => setSelectedPortrait(c.id)}
                     className={`w-12 h-12 border-2 overflow-hidden transition-all ${
                       c.id === selectedPortrait
                         ? 'border-accent shadow-[0_0_8px_hsl(var(--game-gold)/0.5)]'
                         : 'border-game-slot-border opacity-60 hover:opacity-100'
-                    }`}
-                  >
+                    }`}>
                     <img src={c.img} alt={c.name} className="w-full h-full object-cover object-top" />
                   </button>
                 ))}
@@ -155,6 +161,7 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
           </div>
         )}
 
+        {/* STEP 2: Archetype */}
         {step === 2 && (
           <div className="space-y-4">
             <label className="block text-accent font-display font-bold text-sm mb-2">
@@ -162,15 +169,12 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
             </label>
             <div className="grid grid-cols-2 gap-3">
               {genderArchetypes.map(a => (
-                <button
-                  key={a.id}
-                  onClick={() => setSelectedArchetype(a.id)}
+                <button key={a.id} onClick={() => setSelectedArchetype(a.id)}
                   className={`text-left p-3 border-2 transition-all ${
                     a.id === selectedArchetype
                       ? 'border-accent bg-game-slot shadow-[0_0_12px_hsl(var(--game-gold)/0.3)]'
                       : 'border-game-slot-border bg-game-slot/50 hover:border-primary'
-                  }`}
-                >
+                  }`}>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-accent font-display font-bold text-xs">{a.name}</span>
                   </div>
@@ -184,7 +188,6 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
               ))}
             </div>
 
-            {/* Selected archetype details */}
             <div className="bg-game-slot border border-game-slot-border p-3 mt-3">
               <h3 className="text-accent font-display font-bold text-sm mb-1">{archetype.name} — {archetype.title}</h3>
               <div className="mb-2">
@@ -208,7 +211,78 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
           </div>
         )}
 
+        {/* STEP 3: S.P.E.C.I.A.L Allocation */}
         {step === 3 && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <label className="text-accent font-display font-bold text-sm">ALLOCATE S.P.E.C.I.A.L</label>
+              <span className={`text-sm font-bold font-display ${specialLeft > 0 ? 'text-accent' : 'text-rarity-advanced'}`}>
+                {specialLeft} points left
+              </span>
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Distribute {TOTAL_SPECIAL_POINTS} points across your core attributes. Min {MIN_SPECIAL}, Max {MAX_SPECIAL} each.
+            </p>
+
+            <div className="space-y-2">
+              {(Object.keys(SPECIAL_DESCRIPTIONS) as (keyof SpecialStats)[]).map(key => (
+                <div key={key} className="bg-game-slot border border-game-slot-border p-2.5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-accent/20 border border-accent/40 flex items-center justify-center flex-shrink-0">
+                      <span className="text-accent font-display font-bold text-sm">{SPECIAL_DESCRIPTIONS[key].icon}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-[10px] font-bold text-foreground uppercase">{key}</span>
+                        <span className="text-accent font-bold text-sm font-display">{special[key]}</span>
+                      </div>
+                      <p className="text-[8px] text-muted-foreground leading-tight">{SPECIAL_DESCRIPTIONS[key].desc}</p>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button onClick={() => adjustSpecial(key, -1)} disabled={special[key] <= MIN_SPECIAL}
+                        className="w-6 h-6 flex items-center justify-center bg-game-slot-border hover:bg-primary disabled:opacity-30 transition-colors">
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <div className="flex gap-0.5">
+                        {Array.from({ length: MAX_SPECIAL }).map((_, i) => (
+                          <div key={i} className={`w-2.5 h-5 border transition-all ${
+                            i < special[key] ? 'bg-accent border-accent' : 'bg-game-slot border-game-slot-border'
+                          }`} />
+                        ))}
+                      </div>
+                      <button onClick={() => adjustSpecial(key, 1)} disabled={special[key] >= MAX_SPECIAL || specialLeft <= 0}
+                        className="w-6 h-6 flex items-center justify-center bg-game-slot-border hover:bg-primary disabled:opacity-30 transition-colors">
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Derived stats preview */}
+            <div className="bg-game-slot/60 border border-game-slot-border p-3">
+              <span className="text-[9px] text-primary font-bold block mb-1.5">DERIVED STATS PREVIEW</span>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="bg-game-slot/80 border border-game-slot-border p-1.5">
+                  <span className="text-[7px] text-muted-foreground block">MAX HP</span>
+                  <span className="text-accent font-bold text-sm font-display">{derivedHealth}</span>
+                </div>
+                <div className="bg-game-slot/80 border border-game-slot-border p-1.5">
+                  <span className="text-[7px] text-muted-foreground block">BASE DMG</span>
+                  <span className="text-accent font-bold text-sm font-display">{derivedDamage}</span>
+                </div>
+                <div className="bg-game-slot/80 border border-game-slot-border p-1.5">
+                  <span className="text-[7px] text-muted-foreground block">SPEED</span>
+                  <span className="text-accent font-bold text-sm font-display">{derivedSpeed}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4: Trait Allocation */}
+        {step === 4 && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <label className="text-accent font-display font-bold text-sm">ALLOCATE TRAIT POINTS</label>
@@ -221,50 +295,125 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
               {TRAIT_CATEGORIES.map(trait => (
                 <div key={trait} className="flex items-center gap-3 bg-game-slot border border-game-slot-border p-2.5">
                   <span className="text-xs font-bold text-foreground w-24">{trait.toUpperCase()}</span>
-                  <button
-                    onClick={() => adjustTrait(trait, -1)}
-                    disabled={traitPoints[trait] <= 0}
-                    className="w-6 h-6 flex items-center justify-center bg-game-slot-border hover:bg-primary disabled:opacity-30 transition-colors"
-                  >
+                  <button onClick={() => adjustTrait(trait, -1)} disabled={traitPoints[trait] <= 0}
+                    className="w-6 h-6 flex items-center justify-center bg-game-slot-border hover:bg-primary disabled:opacity-30 transition-colors">
                     <Minus className="w-3 h-3" />
                   </button>
                   <div className="flex gap-0.5">
                     {Array.from({ length: MAX_PER_TRAIT }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={`w-5 h-5 border transition-all ${
-                          i < traitPoints[trait]
-                            ? 'bg-accent border-accent'
-                            : 'bg-game-slot border-game-slot-border'
-                        }`}
-                      />
+                      <div key={i} className={`w-5 h-5 border transition-all ${
+                        i < traitPoints[trait] ? 'bg-accent border-accent' : 'bg-game-slot border-game-slot-border'
+                      }`} />
                     ))}
                   </div>
-                  <button
-                    onClick={() => adjustTrait(trait, 1)}
-                    disabled={traitPoints[trait] >= MAX_PER_TRAIT || pointsLeft <= 0}
-                    className="w-6 h-6 flex items-center justify-center bg-game-slot-border hover:bg-primary disabled:opacity-30 transition-colors"
-                  >
+                  <button onClick={() => adjustTrait(trait, 1)} disabled={traitPoints[trait] >= MAX_PER_TRAIT || pointsLeft <= 0}
+                    className="w-6 h-6 flex items-center justify-center bg-game-slot-border hover:bg-primary disabled:opacity-30 transition-colors">
                     <Plus className="w-3 h-3" />
                   </button>
                   <span className="text-[9px] text-muted-foreground w-6 text-right">{traitPoints[trait]}</span>
                 </div>
               ))}
             </div>
+          </div>
+        )}
 
-            {/* Summary */}
-            <div className="bg-game-slot border border-game-slot-border p-3">
-              <h3 className="text-accent font-display font-bold text-xs mb-2">CHARACTER SUMMARY</h3>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px]">
-                <span className="text-muted-foreground">Name:</span>
-                <span className="text-foreground font-bold">{characterName}</span>
-                <span className="text-muted-foreground">Gender:</span>
-                <span className="text-foreground font-bold">{selectedGender === 'male' ? 'Male' : 'Female'}</span>
-                <span className="text-muted-foreground">Archetype:</span>
-                <span className="text-foreground font-bold">{archetype.title}</span>
-                <span className="text-muted-foreground">Traits:</span>
-                <span className="text-foreground">{archetype.traits.join(', ')}</span>
+        {/* STEP 5: Final Summary */}
+        {step === 5 && (
+          <div className="space-y-4">
+            <div className="flex gap-4 items-start">
+              <div className="w-[100px] h-[140px] bg-game-slot border-2 border-accent overflow-hidden flex-shrink-0">
+                <img src={portrait.img} alt={portrait.name} className="w-full h-full object-cover" />
               </div>
+              <div className="flex-1">
+                <h3 className="font-display text-xl font-bold text-accent">{characterName}</h3>
+                <p className="text-primary text-xs font-bold">{archetype.title}</p>
+                <div className="flex gap-1 mt-1 flex-wrap">
+                  {archetype.traits.map(t => (
+                    <span key={t} className="text-[8px] px-1.5 py-0.5 bg-accent/10 text-accent border border-accent/30 font-bold">{t}</span>
+                  ))}
+                </div>
+                <div className="flex gap-1 mt-1 flex-wrap">
+                  {archetype.skills.map(s => (
+                    <span key={s} className="text-[7px] px-1 py-0.5 bg-primary/20 text-primary border border-primary/30 font-bold">{s}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* S.P.E.C.I.A.L Summary */}
+            <div className="bg-game-slot/60 border-2 border-game-slot-border p-3"
+              style={{ borderImage: 'linear-gradient(180deg, hsl(var(--accent)/0.5), hsl(var(--primary)/0.3)) 1' }}>
+              <span className="text-[9px] text-accent font-display font-bold tracking-widest block mb-2">S.P.E.C.I.A.L</span>
+              <div className="grid grid-cols-7 gap-1">
+                {(Object.keys(SPECIAL_DESCRIPTIONS) as (keyof SpecialStats)[]).map(key => (
+                  <div key={key} className="bg-game-slot/80 border border-game-slot-border p-1 text-center">
+                    <span className="text-accent font-display font-bold text-sm block">{SPECIAL_DESCRIPTIONS[key].icon}</span>
+                    <span className="text-foreground font-bold text-base font-display">{special[key]}</span>
+                    <span className="text-[5px] text-muted-foreground block">{key.slice(0, 3).toUpperCase()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Traits Summary */}
+            <div className="bg-game-slot/60 border border-game-slot-border p-3">
+              <span className="text-[9px] text-primary font-bold block mb-1.5">TRAIT POINTS</span>
+              <div className="grid grid-cols-5 gap-1.5">
+                {TRAIT_CATEGORIES.map(trait => (
+                  <div key={trait} className="text-center bg-game-slot/80 border border-game-slot-border p-1">
+                    <span className="text-[7px] text-muted-foreground block">{trait.toUpperCase()}</span>
+                    <span className="text-accent font-bold text-sm font-display">{traitPoints[trait]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Vitals Preview */}
+            <div className="bg-game-slot/60 border border-game-slot-border p-3">
+              <span className="text-[9px] text-primary font-bold block mb-1.5">STARTING VITALS</span>
+              <div className="grid grid-cols-4 gap-1.5 text-center">
+                {[
+                  { label: 'Health', val: derivedHealth, icon: '♥' },
+                  { label: 'Energy', val: 100, icon: '≡' },
+                  { label: 'Hunger', val: 100, icon: '∞' },
+                  { label: 'Thirst', val: 100, icon: '◈' },
+                  { label: 'Sleep', val: 100, icon: '◑' },
+                  { label: 'Morale', val: 75, icon: '★' },
+                  { label: 'Hygiene', val: 80, icon: '◇' },
+                  { label: 'Damage', val: derivedDamage, icon: '⚔' },
+                ].map(v => (
+                  <div key={v.label} className="bg-game-slot/80 border border-game-slot-border p-1">
+                    <span className="text-primary font-display text-xs">{v.icon}</span>
+                    <span className="text-[6px] text-muted-foreground block">{v.label.toUpperCase()}</span>
+                    <span className="text-foreground font-bold text-xs font-display">{v.val}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Justice Preview */}
+            <div className="bg-game-slot/60 border border-game-slot-border p-3">
+              <span className="text-[9px] text-primary font-bold block mb-1.5">STARTING REPUTATION</span>
+              <div className="grid grid-cols-3 gap-1.5 text-center text-[9px]">
+                <div className="bg-game-slot/80 border border-game-slot-border p-1">
+                  <span className="text-muted-foreground block text-[7px]">WANTED</span>
+                  <span className="text-foreground">☆☆☆☆☆</span>
+                </div>
+                <div className="bg-game-slot/80 border border-game-slot-border p-1">
+                  <span className="text-muted-foreground block text-[7px]">LAWFULNESS</span>
+                  <span className="text-foreground font-bold">Neutral</span>
+                </div>
+                <div className="bg-game-slot/80 border border-game-slot-border p-1">
+                  <span className="text-muted-foreground block text-[7px]">HONOR</span>
+                  <span className="text-foreground font-bold">50</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Backstory */}
+            <div className="bg-game-slot/40 border border-game-slot-border p-3">
+              <span className="text-[9px] text-accent font-bold block mb-1">◈ BACKSTORY</span>
+              <p className="text-[9px] text-foreground/70 leading-relaxed italic line-clamp-3">"{archetype.backstory}"</p>
             </div>
           </div>
         )}
@@ -272,27 +421,20 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
         {/* Navigation buttons */}
         <div className="flex gap-3 mt-6">
           {step > 1 && (
-            <button
-              onClick={() => setStep((step - 1) as 1 | 2 | 3)}
-              className="flex-1 py-2.5 bg-game-slot-border border border-game-slot text-foreground font-display font-bold text-sm hover:bg-secondary transition-colors flex items-center justify-center gap-1"
-            >
+            <button onClick={() => setStep((step - 1) as any)}
+              className="flex-1 py-2.5 bg-game-slot-border border border-game-slot text-foreground font-display font-bold text-sm hover:bg-secondary transition-colors flex items-center justify-center gap-1">
               <ChevronLeft className="w-4 h-4" /> BACK
             </button>
           )}
-          {step < 3 ? (
-            <button
-              onClick={() => setStep((step + 1) as 1 | 2 | 3)}
-              disabled={!canProceed}
-              className="flex-1 py-2.5 bg-primary border border-accent text-primary-foreground font-display font-bold text-sm hover:bg-accent transition-colors disabled:opacity-40 flex items-center justify-center gap-1"
-            >
+          {step < totalSteps ? (
+            <button onClick={() => setStep((step + 1) as any)} disabled={!canProceed}
+              className="flex-1 py-2.5 bg-primary border border-accent text-primary-foreground font-display font-bold text-sm hover:bg-accent transition-colors disabled:opacity-40 flex items-center justify-center gap-1">
               NEXT <ChevronRight className="w-4 h-4" />
             </button>
           ) : (
-            <button
-              onClick={handleComplete}
-              className="flex-1 py-2.5 bg-accent border border-accent text-accent-foreground font-display font-bold text-sm hover:bg-primary transition-colors flex items-center justify-center gap-1"
-            >
-              🤠 BEGIN YOUR LEGEND
+            <button onClick={handleComplete}
+              className="flex-1 py-2.5 bg-accent border border-accent text-accent-foreground font-display font-bold text-sm hover:bg-primary transition-colors flex items-center justify-center gap-1">
+              ★ BEGIN YOUR LEGEND
             </button>
           )}
         </div>
