@@ -20,7 +20,7 @@ export function PropertySection() {
               <div>
                 <span className="text-foreground text-xs font-bold">{p.name}</span>
                 <span className="text-muted-foreground text-[9px] block">{p.description} · Lvl {p.levelRequired}+</span>
-                {p.monthlyUpkeep > 0 && <span className="text-[8px] text-destructive/70">Upkeep: ${p.monthlyUpkeep}/mo</span>}
+                {(p as any).monthlyUpkeep > 0 && <span className="text-[8px] text-destructive/70">Upkeep: ${(p as any).monthlyUpkeep}/mo</span>}
               </div>
               <div className="text-right">
                 <span className="text-accent font-bold text-sm">${p.cost}</span>

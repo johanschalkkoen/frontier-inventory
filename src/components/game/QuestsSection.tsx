@@ -32,7 +32,7 @@ export function QuestsSection() {
         {activeMissions.length > 0 ? activeMissions.slice(0, 15).map(m => (
           <div key={m.id} className="flex items-center justify-between bg-game-slot/50 p-2 mb-1 border border-game-slot-border/30">
             <div>
-              <span className="text-foreground text-xs font-bold">{m.title}</span>
+              <span className="text-foreground text-xs font-bold">{m.name}</span>
               <span className="text-muted-foreground text-[9px] block">{m.regionName} · {m.description}</span>
             </div>
             <div className="text-right flex-shrink-0 ml-2">
