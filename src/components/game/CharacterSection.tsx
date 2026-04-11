@@ -8,22 +8,22 @@ import { archetypes } from '@/data/archetypes';
 import { useState } from 'react';
 
 const leftSlots: { type: SlotType; label: string; icon: string }[] = [
-  { type: 'hat', label: 'Hat', icon: '🤠' },
-  { type: 'bandana', label: 'Bandana', icon: '🏴' },
-  { type: 'shirt', label: 'Shirt', icon: '👔' },
-  { type: 'outerwear', label: 'Duster', icon: '🧥' },
-  { type: 'gloves', label: 'Gloves', icon: '🧤' },
-  { type: 'pants', label: 'Pants', icon: '👖' },
-  { type: 'boots', label: 'Boots', icon: '🥾' },
+  { type: 'hat', label: 'Hat', icon: '⌐' },
+  { type: 'bandana', label: 'Bandana', icon: '≋' },
+  { type: 'shirt', label: 'Shirt', icon: '⊤' },
+  { type: 'outerwear', label: 'Duster', icon: '∩' },
+  { type: 'gloves', label: 'Gloves', icon: '✋' },
+  { type: 'pants', label: 'Pants', icon: '∏' },
+  { type: 'boots', label: 'Boots', icon: '⊥' },
 ];
 const rightSlots: { type: SlotType; label: string; icon: string }[] = [
-  { type: 'sidearm', label: 'Pistol', icon: '🔫' },
-  { type: 'longarm', label: 'Rifle', icon: '🎯' },
-  { type: 'knife', label: 'Blade', icon: '🗡️' },
-  { type: 'gunbelt', label: 'Belt', icon: '🪢' },
-  { type: 'rope', label: 'Lasso', icon: '🪢' },
-  { type: 'canteen', label: 'Water', icon: '🫗' },
-  { type: 'tobacco', label: 'Smoke', icon: '🚬' },
+  { type: 'sidearm', label: 'Pistol', icon: '⌁' },
+  { type: 'longarm', label: 'Rifle', icon: '╪' },
+  { type: 'knife', label: 'Blade', icon: '†' },
+  { type: 'gunbelt', label: 'Belt', icon: '⊶' },
+  { type: 'rope', label: 'Lasso', icon: '◎' },
+  { type: 'canteen', label: 'Water', icon: '◉' },
+  { type: 'tobacco', label: 'Smoke', icon: '⊘' },
 ];
 
 const statIcons: Record<string, string> = {
@@ -129,8 +129,8 @@ export function CharacterSection() {
         {/* Misc slot */}
         <div className="flex justify-center gap-2 mt-3 p-2 bg-game-slot/20 border border-game-slot-border/30"
           style={{ borderImage: 'linear-gradient(90deg, transparent, hsl(var(--primary)/0.3), transparent) 1' }}>
-          <EquipSlot slotType="special" label="Misc" icon="📦" onHover={onHover} onLeave={onLeave} />
-          <EquipSlot slotType="shovel" label="Shovel" icon="⛏️" onHover={onHover} onLeave={onLeave} />
+          <EquipSlot slotType="special" label="Misc" icon="⊞" onHover={onHover} onLeave={onLeave} />
+          <EquipSlot slotType="shovel" label="Shovel" icon="⚒" onHover={onHover} onLeave={onLeave} />
         </div>
 
         {/* Quick Stats */}
@@ -154,7 +154,7 @@ export function CharacterSection() {
             })}
           </div>
           <div className="mt-2 pt-2 border-t border-game-slot-border flex justify-between text-accent font-bold text-xs">
-            <span>💰 WALLET:</span>
+            <span>$ WALLET:</span>
             <span>${coinTotal.toFixed(2)}</span>
           </div>
         </div>

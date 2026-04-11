@@ -154,8 +154,8 @@ export function QuestsSection() {
                   <span className="text-foreground text-xs font-bold">{m.name}</span>
                   <span className="text-muted-foreground text-[9px] block">{m.regionName} — {story.location}</span>
                   <div className="flex gap-2 mt-0.5 flex-wrap">
-                    <span className="text-[8px] text-primary">🎯 {m.type}</span>
-                    <span className="text-[8px] text-primary">⏱ {travelTime}min {playerHasHorse ? '🐴' : '🚶'}</span>
+                    <span className="text-[8px] text-primary">▸ {m.type}</span>
+                    <span className="text-[8px] text-primary">⏱ {travelTime}min {playerHasHorse ? '⊳ Horse' : '⊥ On foot'}</span>
                     <span className={`text-[8px] ${risk.color}`}>⚠ {risk.label}</span>
                     {m.encounters && <span className="text-[8px] text-destructive/80">⚔ {m.encounters.length} encounters</span>}
                   </div>
@@ -164,7 +164,7 @@ export function QuestsSection() {
                   <span className="text-accent text-[9px] block">+{m.xpReward} XP · ${m.coinReward}</span>
                   <span className="text-[8px] text-muted-foreground">⚡-{risk.energyCost} energy</span>
                   {locked ? (
-                    <span className="text-[8px] text-muted-foreground block">🔒 LVL {m.levelRequired}</span>
+                    <span className="text-[8px] text-muted-foreground block">▣ LVL {m.levelRequired}</span>
                   ) : hasActiveQuest ? (
                     <span className="text-[8px] text-muted-foreground block">ON QUEST</span>
                   ) : !reqCheck.met ? (
@@ -200,9 +200,9 @@ export function QuestsSection() {
                     </div>
                   </div>
                   <div className="flex gap-3 mb-1 flex-wrap text-[8px]">
-                    <span className="text-muted-foreground">🚶 Walk: {Math.ceil(m.durationMinutes * 1.5)}min</span>
-                    <span className="text-accent">🐴 Ride: {Math.ceil(m.durationMinutes * 0.6)}min</span>
-                    <span className={risk.color}>⚠ Risk: {risk.label} (⚡-{risk.energyCost} ❤️-{risk.healthRisk})</span>
+                    <span className="text-muted-foreground">⊥ Walk: {Math.ceil(m.durationMinutes * 1.5)}min</span>
+                    <span className="text-accent">⊳ Ride: {Math.ceil(m.durationMinutes * 0.6)}min</span>
+                    <span className={risk.color}>⚠ Risk: {risk.label} (Energy -{risk.energyCost} Health -{risk.healthRisk})</span>
                   </div>
                   {m.requirements && m.requirements.length > 0 && (
                     <div className="mb-1">
@@ -384,8 +384,8 @@ function ActiveQuestPanel() {
       <div className="border border-game-slot-border bg-game-slot/40 p-2 mb-2">
         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
           <span className="text-[8px] text-muted-foreground font-bold">EQUIPPED:</span>
-          {equippedSidearm && <span className="text-[9px] text-accent">🔫 {equippedSidearm.name}</span>}
-          {equippedLongarm && <span className="text-[9px] text-accent">🎯 {equippedLongarm.name}</span>}
+          {equippedSidearm && <span className="text-[9px] text-accent">⌁ {equippedSidearm.name}</span>}
+          {equippedLongarm && <span className="text-[9px] text-accent">╪ {equippedLongarm.name}</span>}
           {!equippedSidearm && !equippedLongarm && (
             isBrawl ? <span className="text-[9px] text-accent">👊 Bare fists</span>
               : <span className="text-[9px] text-destructive">⚠ No weapon!</span>
