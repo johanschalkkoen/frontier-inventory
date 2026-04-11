@@ -42,11 +42,11 @@ function GameContent() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-2 md:p-4">
-      <div className="flex flex-col gap-3 md:gap-5 p-3 md:p-6 bg-game-container border-2 md:border-4 border-game-slot shadow-[0_0_50px_rgba(0,0,0,0.8)] max-w-[1200px] w-full">
+    <div className="flex min-h-screen items-center justify-center bg-background p-1 md:p-4">
+      <div className="flex flex-col gap-2 md:gap-5 p-2 md:p-6 bg-game-container border-2 md:border-4 border-game-slot shadow-[0_0_50px_rgba(0,0,0,0.8)] max-w-[1200px] w-full">
         <TopMenuBar />
         <TimeBar />
-        <div className="flex gap-4 md:gap-6 items-start overflow-x-auto">
+        <div className="flex gap-2 md:gap-6 items-start overflow-x-auto">
           {state.activeTab === 'CHARACTER' && <CharacterSection />}
           {state.activeTab === 'MAPS' && <WorldMap />}
           {state.activeTab === 'SHOP' && <ShopSection />}
