@@ -38,13 +38,16 @@ export function TopMenuBar() {
         ))}
       </div>
 
-      <div className="ml-auto flex items-center gap-4 bg-game-slot px-5 py-2 border-2 border-game-slot-border rounded-lg">
-        <div className="w-[45px] h-[45px] border-2 border-primary -rotate-3 overflow-hidden">
-          <img src={moneybagImg} alt="Bag" className="w-full h-full object-cover" width={45} height={45} />
-        </div>
-        <div className="flex flex-col">
-          <span className="text-[8px] text-muted-foreground font-bold tracking-wider">WALLET</span>
-          <span className="text-accent text-xl font-bold">${state.walletAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+      <div className="ml-auto flex items-center gap-4">
+        <UserBadge />
+        <div className="flex items-center gap-4 bg-game-slot px-5 py-2 border-2 border-game-slot-border rounded-lg">
+          <div className="w-[45px] h-[45px] border-2 border-primary -rotate-3 overflow-hidden">
+            <img src={moneybagImg} alt="Bag" className="w-full h-full object-cover" width={45} height={45} />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[8px] text-muted-foreground font-bold tracking-wider">WALLET</span>
+            <span className="text-accent text-xl font-bold">${state.walletAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+          </div>
         </div>
       </div>
     </nav>
