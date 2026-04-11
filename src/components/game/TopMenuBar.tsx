@@ -1,4 +1,5 @@
 import { useGame } from '@/context/GameContext';
+import { UserBadge } from './UserBadge';
 import moneybagImg from '@/assets/moneybag.jpg';
 
 const tabs = [
