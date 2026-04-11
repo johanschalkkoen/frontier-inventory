@@ -107,39 +107,54 @@ export const itemDatabase: GameItem[] = [
   { id: 'item-42', type: 'gloves', rarity: 'legendary', category: 'clothing', name: 'Deadeye Gauntlets', img: glovesImg, stats: { damage: 15, speed: 8, luck: 10 }, value: 765, levelRequired: 11 },
 
   // =================== WEAPONS ===================
-  // Sidearms
+  // Sidearms (Handguns)
   { id: 'item-70', type: 'sidearm', rarity: 'basic', category: 'weapon', name: 'Percussion Revolver', img: sidearmImg, stats: { damage: 8, speed: 3 }, value: 22, levelRequired: 1 },
-  { id: 'item-11', type: 'sidearm', rarity: 'advanced', category: 'weapon', name: 'Derringer', img: derringerImg, stats: { damage: 15, speed: 8 }, value: 68, levelRequired: 3 },
-  { id: 'item-71', type: 'sidearm', rarity: 'advanced', category: 'weapon', name: 'Colt Navy Revolver', img: sidearmImg, stats: { damage: 18, speed: 5 }, value: 85, levelRequired: 3 },
-  { id: 'item-32', type: 'sidearm', rarity: 'rare', category: 'weapon', name: 'Schofield Revolver', img: sidearmImg, stats: { damage: 30, speed: 3 }, value: 272, levelRequired: 6 },
-  { id: 'item-4', type: 'sidearm', rarity: 'legendary', category: 'weapon', name: 'Colt Peacemaker', img: sidearmImg, stats: { damage: 45, speed: 5 }, value: 850, levelRequired: 10 },
+  { id: 'item-11', type: 'sidearm', rarity: 'advanced', category: 'weapon', name: 'Derringer', img: derringerImg, stats: { damage: 15, speed: 8 }, value: 28, levelRequired: 3 },
+  { id: 'item-71', type: 'sidearm', rarity: 'advanced', category: 'weapon', name: 'Colt 1851 Navy', img: sidearmImg, stats: { damage: 18, speed: 5 }, value: 70, levelRequired: 3 },
+  { id: 'item-200', type: 'sidearm', rarity: 'advanced', category: 'weapon', name: 'Colt 1860 Army', img: sidearmImg, stats: { damage: 20, speed: 4 }, value: 85, levelRequired: 4 },
+  { id: 'item-201', type: 'sidearm', rarity: 'rare', category: 'weapon', name: 'Remington 1875', img: sidearmImg, stats: { damage: 28, speed: 4, luck: 2 }, value: 90, levelRequired: 5 },
+  { id: 'item-32', type: 'sidearm', rarity: 'rare', category: 'weapon', name: 'Schofield Revolver', img: sidearmImg, stats: { damage: 30, speed: 3 }, value: 100, levelRequired: 6 },
+  { id: 'item-202', type: 'sidearm', rarity: 'rare', category: 'weapon', name: 'Smith & Wesson Russian', img: sidearmImg, stats: { damage: 32, speed: 3, luck: 3 }, value: 110, levelRequired: 7 },
+  { id: 'item-203', type: 'sidearm', rarity: 'basic', category: 'weapon', name: 'Colt Pocket Pistol', img: derringerImg, stats: { damage: 10, speed: 6 }, value: 30, levelRequired: 2 },
+  { id: 'item-4', type: 'sidearm', rarity: 'epic', category: 'weapon', name: 'Colt Peacemaker (.45)', img: sidearmImg, stats: { damage: 45, speed: 5, charisma: 3 }, value: 120, levelRequired: 8 },
+  { id: 'item-204', type: 'sidearm', rarity: 'legendary', category: 'weapon', name: 'Engraved Silver Peacemaker', img: sidearmImg, stats: { damage: 55, speed: 6, charisma: 8, luck: 5 }, value: 850, levelRequired: 15 },
 
-  // Longarms
-  { id: 'item-72', type: 'longarm', rarity: 'basic', category: 'weapon', name: 'Single-Shot Carbine', img: longarmImg, stats: { damage: 18, speed: -4 }, value: 34, levelRequired: 1 },
-  { id: 'item-73', type: 'longarm', rarity: 'advanced', category: 'weapon', name: 'Henry Repeater', img: longarmImg, stats: { damage: 32, speed: -3 }, value: 136, levelRequired: 4 },
-  { id: 'item-12', type: 'longarm', rarity: 'rare', category: 'weapon', name: 'Double-Barrel Shotgun', img: shotgunImg, stats: { damage: 40, speed: -3 }, value: 255, levelRequired: 5 },
-  { id: 'item-74', type: 'longarm', rarity: 'rare', category: 'weapon', name: 'Sawed-Off Shotgun', img: shotgunImg, stats: { damage: 35, speed: 2 }, value: 204, levelRequired: 5 },
-  { id: 'item-5', type: 'longarm', rarity: 'epic', category: 'weapon', name: 'Winchester 1873', img: longarmImg, stats: { damage: 60, speed: -5 }, value: 510, levelRequired: 8 },
-  { id: 'item-33', type: 'longarm', rarity: 'legendary', category: 'weapon', name: 'Sharps Buffalo Rifle', img: longarmImg, stats: { damage: 80, speed: -8, luck: 5 }, value: 1190, levelRequired: 12 },
+  // Long Guns (Rifles & Shotguns)
+  { id: 'item-72', type: 'longarm', rarity: 'basic', category: 'weapon', name: 'Springfield Trapdoor Carbine', img: longarmImg, stats: { damage: 18, speed: -4 }, value: 55, levelRequired: 1 },
+  { id: 'item-205', type: 'longarm', rarity: 'basic', category: 'weapon', name: 'Single-Shot Carbine', img: longarmImg, stats: { damage: 15, speed: -3 }, value: 34, levelRequired: 1 },
+  { id: 'item-206', type: 'longarm', rarity: 'advanced', category: 'weapon', name: 'Winchester 1866 Yellow Boy', img: longarmImg, stats: { damage: 28, speed: -3 }, value: 90, levelRequired: 3 },
+  { id: 'item-73', type: 'longarm', rarity: 'advanced', category: 'weapon', name: 'Henry Rifle (1860)', img: longarmImg, stats: { damage: 35, speed: -3 }, value: 120, levelRequired: 4 },
+  { id: 'item-12', type: 'longarm', rarity: 'rare', category: 'weapon', name: 'Double-Barrel Coach Gun', img: shotgunImg, stats: { damage: 40, speed: -3 }, value: 80, levelRequired: 5 },
+  { id: 'item-74', type: 'longarm', rarity: 'rare', category: 'weapon', name: 'Sawed-Off Shotgun', img: shotgunImg, stats: { damage: 35, speed: 2 }, value: 75, levelRequired: 5 },
+  { id: 'item-5', type: 'longarm', rarity: 'epic', category: 'weapon', name: 'Winchester 1873 (.44-40)', img: longarmImg, stats: { damage: 60, speed: -5, luck: 3 }, value: 130, levelRequired: 8 },
+  { id: 'item-207', type: 'longarm', rarity: 'epic', category: 'weapon', name: 'Sharps Carbine', img: longarmImg, stats: { damage: 65, speed: -6, defense: 3 }, value: 145, levelRequired: 9 },
+  { id: 'item-33', type: 'longarm', rarity: 'legendary', category: 'weapon', name: 'Sharps "Big Fifty" Buffalo Rifle', img: longarmImg, stats: { damage: 80, speed: -8, luck: 5 }, value: 160, levelRequired: 12 },
 
-  // Knives
-  { id: 'item-75', type: 'knife', rarity: 'basic', category: 'weapon', name: 'Folding Knife', img: knifeImg, stats: { damage: 8, speed: 2 }, value: 6, levelRequired: 1 },
-  { id: 'item-76', type: 'knife', rarity: 'advanced', category: 'weapon', name: 'Sheath Knife', img: knifeImg, stats: { damage: 15, speed: 3 }, value: 34, levelRequired: 2 },
-  { id: 'item-8', type: 'knife', rarity: 'rare', category: 'weapon', name: 'Bowie Knife', img: knifeImg, stats: { damage: 25, speed: 3 }, value: 170, levelRequired: 4 },
+  // Melee & Backup
+  { id: 'item-75', type: 'knife', rarity: 'basic', category: 'weapon', name: 'Folding Pocket Knife', img: knifeImg, stats: { damage: 6, speed: 2 }, value: 6, levelRequired: 1 },
+  { id: 'item-76', type: 'knife', rarity: 'advanced', category: 'weapon', name: 'Sheath Knife', img: knifeImg, stats: { damage: 15, speed: 3 }, value: 18, levelRequired: 2 },
+  { id: 'item-208', type: 'knife', rarity: 'advanced', category: 'weapon', name: 'Arkansas Toothpick', img: knifeImg, stats: { damage: 18, speed: 4 }, value: 22, levelRequired: 3 },
+  { id: 'item-8', type: 'knife', rarity: 'rare', category: 'weapon', name: 'Bowie Knife', img: knifeImg, stats: { damage: 25, speed: 3 }, value: 20, levelRequired: 4 },
+  { id: 'item-209', type: 'knife', rarity: 'rare', category: 'weapon', name: 'Tomahawk', img: knifeImg, stats: { damage: 28, speed: 2, luck: 3 }, value: 15, levelRequired: 5 },
+  { id: 'item-210', type: 'knife', rarity: 'epic', category: 'weapon', name: 'Bullwhip', img: ropeImg, stats: { damage: 20, speed: 5, charisma: 5 }, value: 25, levelRequired: 5 },
   { id: 'item-34', type: 'knife', rarity: 'epic', category: 'weapon', name: 'Damascus Steel Blade', img: knifeImg, stats: { damage: 40, speed: 5 }, value: 425, levelRequired: 9 },
 
-  // Gun Belts
-  { id: 'item-77', type: 'gunbelt', rarity: 'basic', category: 'weapon', name: 'Plain Leather Belt', img: gunbeltImg, stats: { damage: 2, defense: 1 }, value: 8, levelRequired: 1 },
-  { id: 'item-19', type: 'gunbelt', rarity: 'rare', category: 'weapon', name: 'Bullet Belt', img: gunbeltImg, stats: { damage: 8, defense: 5 }, value: 136, levelRequired: 4 },
+  // Gun Belts & Holsters
+  { id: 'item-77', type: 'gunbelt', rarity: 'basic', category: 'weapon', name: 'Plain Leather Belt', img: gunbeltImg, stats: { damage: 2, defense: 1 }, value: 22, levelRequired: 1 },
+  { id: 'item-211', type: 'gunbelt', rarity: 'advanced', category: 'weapon', name: 'Gun Belt & Holster', img: gunbeltImg, stats: { damage: 5, defense: 3 }, value: 35, levelRequired: 3 },
+  { id: 'item-19', type: 'gunbelt', rarity: 'rare', category: 'weapon', name: 'Cartridge Belt (loops)', img: gunbeltImg, stats: { damage: 8, defense: 5 }, value: 40, levelRequired: 4 },
+  { id: 'item-212', type: 'gunbelt', rarity: 'rare', category: 'weapon', name: 'Rifle Scabbard', img: gunbeltImg, stats: { damage: 5, speed: 3, defense: 2 }, value: 15, levelRequired: 4 },
   { id: 'item-45', type: 'gunbelt', rarity: 'epic', category: 'weapon', name: 'Desperado Belt', img: gunbeltImg, stats: { damage: 12, defense: 8, speed: 3 }, value: 374, levelRequired: 7 },
+  { id: 'item-213', type: 'gunbelt', rarity: 'advanced', category: 'weapon', name: 'Ammo Bandolier', img: gunbeltImg, stats: { damage: 5, defense: 2 }, value: 18, levelRequired: 3 },
   { id: 'item-46', type: 'gunbelt', rarity: 'legendary', category: 'weapon', name: "Warlord's Bandolier", img: gunbeltImg, stats: { damage: 20, defense: 12, speed: 5 }, value: 1020, levelRequired: 13 },
 
   // Ammo (consumable/stackable)
-  { id: 'item-80', type: 'special', rarity: 'basic', category: 'ammo', name: 'Revolver Cartridges (12)', img: sidearmImg, stats: { damage: 2 }, value: 3, levelRequired: 1, consumable: true, stackable: true },
-  { id: 'item-81', type: 'special', rarity: 'basic', category: 'ammo', name: 'Rifle Rounds (10)', img: longarmImg, stats: { damage: 3 }, value: 5, levelRequired: 1, consumable: true, stackable: true },
-  { id: 'item-82', type: 'special', rarity: 'basic', category: 'ammo', name: 'Shotgun Shells (8)', img: shotgunImg, stats: { damage: 4 }, value: 4, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-80', type: 'special', rarity: 'basic', category: 'ammo', name: 'Revolver Cartridges (50)', img: sidearmImg, stats: { damage: 2 }, value: 8, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-81', type: 'special', rarity: 'basic', category: 'ammo', name: 'Rifle Rounds (50)', img: longarmImg, stats: { damage: 3 }, value: 10, levelRequired: 1, consumable: true, stackable: true },
+  { id: 'item-82', type: 'special', rarity: 'basic', category: 'ammo', name: 'Shotgun Shells (25)', img: shotgunImg, stats: { damage: 4 }, value: 8, levelRequired: 1, consumable: true, stackable: true },
   { id: 'item-83', type: 'special', rarity: 'advanced', category: 'ammo', name: 'Silver Bullets (6)', img: sidearmImg, stats: { damage: 8, luck: 3 }, value: 26, levelRequired: 4, consumable: true, stackable: true },
   { id: 'item-84', type: 'special', rarity: 'rare', category: 'ammo', name: 'Explosive Rounds (4)', img: dynamiteImg, stats: { damage: 15 }, value: 68, levelRequired: 7, consumable: true, stackable: true },
+  { id: 'item-214', type: 'special', rarity: 'basic', category: 'ammo', name: 'Gun Cleaning Kit', img: sidearmImg, stats: { damage: 3 }, value: 10, levelRequired: 1 },
 
   // =================== FOOD & DRINK ===================
   // Food
