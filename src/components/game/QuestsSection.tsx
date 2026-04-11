@@ -154,7 +154,7 @@ export function QuestsSection() {
                   <span className="text-foreground text-xs font-bold">{m.name}</span>
                   <span className="text-muted-foreground text-[9px] block">{m.regionName} — {story.location}</span>
                   <div className="flex gap-2 mt-0.5 flex-wrap">
-                    <span className="text-[8px] text-primary">🎯 {m.type}</span>
+                    <span className="text-[8px] text-primary">▸ {m.type}</span>
                     <span className="text-[8px] text-primary">⏱ {travelTime}min {playerHasHorse ? '🐴' : '🚶'}</span>
                     <span className={`text-[8px] ${risk.color}`}>⚠ {risk.label}</span>
                     {m.encounters && <span className="text-[8px] text-destructive/80">⚔ {m.encounters.length} encounters</span>}
