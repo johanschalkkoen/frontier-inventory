@@ -307,6 +307,8 @@ function ActiveQuestPanel() {
     return item.type === 'sidearm' || item.type === 'longarm' || item.type === 'knife';
   });
 
+  if (!mission) return null;
+
   const equippedSidearm = getEquippedItem('sidearm');
   const equippedLongarm = getEquippedItem('longarm');
   const isBrawl = mission.name.toLowerCase().includes('brawl') || mission.description.toLowerCase().includes('fist');
