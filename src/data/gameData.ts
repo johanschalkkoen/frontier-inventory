@@ -1,4 +1,5 @@
 import coinImg from '@/assets/items/coin.jpg';
+import shovelImg from '@/assets/items/shovel.jpg';
 import hatImg from '@/assets/items/hat.jpg';
 import hat2Img from '@/assets/items/hat2.jpg';
 import sidearmImg from '@/assets/items/sidearm.jpg';
