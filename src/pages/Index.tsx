@@ -12,6 +12,23 @@ import { useState, useEffect } from 'react';
 
 function GameContent() {
   const { state, loaded } = useGame();
+  const { user } = useAuth();
+
+  const handleDeleteCharacter = async () => {
+    if (!user) return;
+    // Delete character and reset progress
+    await supabase.from('player_characters').delete().eq('user_id', user.id);
+    await supabase.from('player_progress').update({
+      gender: 'male',
+      selected_character_id: 'male-0',
+      total_xp: 0,
+      wallet_amount: 0,
+      completed_missions: [],
+      item_locations: {},
+    }).eq('user_id', user.id);
+    // Reload the page to restart
+    window.location.reload();
+  };
 
   if (!loaded) {
     return (
@@ -28,7 +45,7 @@ function GameContent() {
         <div className="flex gap-6 items-start">
           {state.activeTab === 'CHARACTER' && (
             <>
-              <CharacterSection />
+              <CharacterSection onDeleteCharacter={handleDeleteCharacter} />
               <div className="flex gap-4">
                 <InventoryBag bagId="bag-left" title="Left Saddlebag" />
                 <InventoryBag bagId="bag-right" title="Right Saddlebag" />
@@ -52,7 +69,6 @@ function AuthGate() {
       setHasCharacter(null);
       return;
     }
-    // Check if user has a created character
     supabase
       .from('player_characters')
       .select('id')
@@ -86,6 +102,16 @@ function AuthGate() {
     return (
       <CharacterCreation
         onComplete={async (data) => {
+          // Reset progress to 0 for new character
+          await supabase.from('player_progress').update({
+            gender: data.archetypeId.startsWith('f') ? 'female' : 'male',
+            selected_character_id: data.portraitId,
+            total_xp: 0,
+            wallet_amount: 0,
+            completed_missions: [],
+            item_locations: {},
+          }).eq('user_id', user.id);
+
           const { error } = await supabase.from('player_characters').insert({
             user_id: user.id,
             character_name: data.characterName,

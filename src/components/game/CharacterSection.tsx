@@ -5,23 +5,47 @@ import { STANDARD_STATS, type SlotType } from '@/data/gameData';
 import { characters } from '@/data/characters';
 import { archetypes } from '@/data/archetypes';
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
-const leftSlots: { type: SlotType; label: string }[] = [
-  { type: 'hat', label: 'Hat' }, { type: 'bandana', label: 'Mask' },
-  { type: 'shirt', label: 'Shirt' }, { type: 'outerwear', label: 'Coat' }, { type: 'gloves', label: 'Gloves' },
+const leftSlots: { type: SlotType; label: string; icon: string }[] = [
+  { type: 'hat', label: 'Hat', icon: '🤠' },
+  { type: 'bandana', label: 'Mask', icon: '🎭' },
+  { type: 'shirt', label: 'Shirt', icon: '👕' },
+  { type: 'outerwear', label: 'Coat', icon: '🧥' },
+  { type: 'gloves', label: 'Gloves', icon: '🧤' },
 ];
-const rightSlots: { type: SlotType; label: string }[] = [
-  { type: 'sidearm', label: 'Sidearm' }, { type: 'longarm', label: 'Longarm' },
-  { type: 'gunbelt', label: 'Gunbelt' }, { type: 'pants', label: 'Pants' }, { type: 'boots', label: 'Boots' },
+const rightSlots: { type: SlotType; label: string; icon: string }[] = [
+  { type: 'sidearm', label: 'Sidearm', icon: '🔫' },
+  { type: 'longarm', label: 'Longarm', icon: '🎯' },
+  { type: 'gunbelt', label: 'Gunbelt', icon: '⚔️' },
+  { type: 'pants', label: 'Pants', icon: '👖' },
+  { type: 'boots', label: 'Boots', icon: '🥾' },
 ];
-const accessorySlots: { type: SlotType; label: string }[] = [
-  { type: 'knife', label: 'Knife' }, { type: 'rope', label: 'Rope' },
-  { type: 'canteen', label: 'Water' }, { type: 'tobacco', label: 'Tobacco' }, { type: 'special', label: 'Misc' },
+const accessorySlots: { type: SlotType; label: string; icon: string }[] = [
+  { type: 'knife', label: 'Knife', icon: '🗡️' },
+  { type: 'rope', label: 'Rope', icon: '🪢' },
+  { type: 'canteen', label: 'Water', icon: '🫗' },
+  { type: 'tobacco', label: 'Tobacco', icon: '🚬' },
+  { type: 'special', label: 'Misc', icon: '💎' },
 ];
 
-export function CharacterSection() {
-  const { state, setGender, setSelectedCharacter, getCalculatedStats, getCoinTotal, getPlayerLevel } = useGame();
+interface CharacterSectionProps {
+  onDeleteCharacter?: () => void;
+}
+
+export function CharacterSection({ onDeleteCharacter }: CharacterSectionProps) {
+  const { state, getCalculatedStats, getCoinTotal, getPlayerLevel } = useGame();
   const stats = getCalculatedStats();
   const coinTotal = getCoinTotal();
   const { level, currentXp, xpToNext } = getPlayerLevel();
@@ -30,31 +54,83 @@ export function CharacterSection() {
   const onHover = (e: React.MouseEvent, name: string, value: number) => setTooltip({ x: e.clientX, y: e.clientY, name, value });
   const onLeave = () => setTooltip(null);
 
-  const genderChars = characters.filter(c => c.gender === state.gender);
-  const currentChar = characters.find(c => c.id === state.selectedCharacterId) || genderChars[0];
-  const currentIdx = genderChars.findIndex(c => c.id === currentChar.id);
-
-  const cycleChar = (dir: -1 | 1) => {
-    const next = (currentIdx + dir + genderChars.length) % genderChars.length;
-    setSelectedCharacter(genderChars[next].id);
-  };
-
-  const barConfigs = [
-    { label: 'HEALTH', key: 'health', colorClass: 'bg-bar-health' },
-    { label: 'ENERGY', key: 'energy', colorClass: 'bg-bar-energy' },
-    { label: 'QUENCH', key: 'thirst', colorClass: 'bg-bar-thirst' },
-    { label: 'SLEEP', key: 'sleep', colorClass: 'bg-bar-sleep' },
-  ];
-
+  // Only show the character chosen at creation
+  const currentChar = characters.find(c => c.id === state.selectedCharacterId);
   const xpPct = xpToNext > 0 ? (currentXp / xpToNext) * 100 : 0;
-
   const archetype = archetypes.find(a => a.id === state.archetypeId);
+
+  const [deleteStep, setDeleteStep] = useState(0);
 
   return (
     <div className="w-[360px] flex-shrink-0">
-      <h1 className="font-display text-2xl font-black text-accent tracking-wider text-center mb-0.5 drop-shadow-[2px_2px_0px_rgba(0,0,0,0.8)]">
-        {state.characterName || 'Frontier Legend'}
-      </h1>
+      <div className="flex items-center justify-between mb-0.5">
+        <div className="flex-1" />
+        <h1 className="font-display text-2xl font-black text-accent tracking-wider text-center drop-shadow-[2px_2px_0px_rgba(0,0,0,0.8)]">
+          {state.characterName || 'Frontier Legend'}
+        </h1>
+        <div className="flex-1 flex justify-end">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                className="p-1.5 rounded hover:bg-destructive/20 transition-colors group"
+                title="Delete Character"
+                onClick={() => setDeleteStep(0)}
+              >
+                <Trash2 className="w-4 h-4 text-muted-foreground group-hover:text-destructive transition-colors" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-game-container border-2 border-destructive/50">
+              {deleteStep === 0 ? (
+                <>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-destructive font-display text-xl">⚠️ Delete Character?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-foreground/80 space-y-2">
+                      <p>You are about to <strong className="text-destructive">permanently delete</strong> your character <strong className="text-accent">{state.characterName}</strong>.</p>
+                      <p className="text-sm text-destructive/80 font-bold">This will destroy:</p>
+                      <ul className="text-sm list-disc list-inside space-y-1 text-muted-foreground">
+                        <li>All equipped items and inventory</li>
+                        <li>All progress, XP, and completed missions</li>
+                        <li>All currency and wallet balance</li>
+                        <li>Your character portrait and archetype</li>
+                      </ul>
+                      <p className="text-xs text-destructive font-bold mt-2">THIS CANNOT BE UNDONE.</p>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="border-game-slot-border">Cancel</AlertDialogCancel>
+                    <button
+                      onClick={() => setDeleteStep(1)}
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 h-10 px-4 py-2"
+                    >
+                      I understand, continue
+                    </button>
+                  </AlertDialogFooter>
+                </>
+              ) : (
+                <>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-destructive font-display text-xl">🔥 Final Warning</AlertDialogTitle>
+                    <AlertDialogDescription className="text-foreground/80">
+                      <p>Are you <strong>absolutely sure</strong>? Type nothing will bring <strong className="text-accent">{state.characterName}</strong> back.</p>
+                      <p className="text-destructive font-bold text-sm mt-2">All data will be permanently erased.</p>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="border-game-slot-border">Keep my character</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={onDeleteCharacter}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete Forever
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </>
+              )}
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </div>
+
       {archetype && (
         <p className="text-center text-muted-foreground text-[10px] mb-1">{archetype.title} — {archetype.traits.join(' · ')}</p>
       )}
@@ -74,62 +150,47 @@ export function CharacterSection() {
       </div>
 
       <div className="grid grid-cols-2 gap-2 mb-3">
-        {barConfigs.map(b => (
+        {[
+          { label: 'HEALTH', key: 'health', colorClass: 'bg-bar-health' },
+          { label: 'ENERGY', key: 'energy', colorClass: 'bg-bar-energy' },
+          { label: 'QUENCH', key: 'thirst', colorClass: 'bg-bar-thirst' },
+          { label: 'SLEEP', key: 'sleep', colorClass: 'bg-bar-sleep' },
+        ].map(b => (
           <StatusBar key={b.key} label={b.label} value={stats[b.key]} max={100} colorClass={b.colorClass} />
         ))}
       </div>
 
-      <div className="flex gap-1 mb-4">
-        <button onClick={() => setGender('male')}
-          className={`flex-1 py-2 text-[10px] font-bold border border-game-slot transition-all ${
-            state.gender === 'male' ? 'bg-primary text-primary-foreground' : 'bg-game-slot-border text-foreground hover:bg-secondary'
-          }`}>Gunslinger</button>
-        <button onClick={() => setGender('female')}
-          className={`flex-1 py-2 text-[10px] font-bold border border-game-slot transition-all ${
-            state.gender === 'female' ? 'bg-primary text-primary-foreground' : 'bg-game-slot-border text-foreground hover:bg-secondary'
-          }`}>Bounty Hunter</button>
-      </div>
-
-      <div className="flex gap-2.5 items-center justify-center">
+      {/* Equipment layout */}
+      <div className="flex gap-3 items-center justify-center">
+        {/* Left equip column */}
         <div className="flex flex-col gap-2">
-          {leftSlots.map(s => <EquipSlot key={s.type} slotType={s.type} label={s.label} onHover={onHover} onLeave={onLeave} />)}
+          {leftSlots.map(s => <EquipSlot key={s.type} slotType={s.type} label={s.label} icon={s.icon} onHover={onHover} onLeave={onLeave} />)}
         </div>
 
+        {/* Character portrait - single, locked */}
         <div className="flex flex-col items-center gap-1">
-          <div className="relative w-[155px] h-[344px] bg-game-slot border-2 border-game-slot overflow-hidden">
-            <img src={currentChar.img} alt={currentChar.name}
-                 className="w-full h-full object-cover" width={155} height={344} />
-            <button onClick={() => cycleChar(-1)}
-              className="absolute left-0 top-1/2 -translate-y-1/2 bg-game-slot/80 hover:bg-primary/80 p-0.5 transition-colors">
-              <ChevronLeft className="w-4 h-4 text-accent" />
-            </button>
-            <button onClick={() => cycleChar(1)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 bg-game-slot/80 hover:bg-primary/80 p-0.5 transition-colors">
-              <ChevronRight className="w-4 h-4 text-accent" />
-            </button>
+          <div className="relative w-[155px] h-[344px] bg-game-slot border-2 border-primary/40 overflow-hidden rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.5),inset_0_0_30px_rgba(0,0,0,0.3)]">
+            {currentChar && (
+              <img src={currentChar.img} alt={currentChar.name}
+                   className="w-full h-full object-cover" width={155} height={344} />
+            )}
+            {/* Vignette overlay */}
+            <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.6)] pointer-events-none" />
           </div>
-          <span className="text-[10px] text-accent font-bold tracking-wider">{currentChar.name.toUpperCase()}</span>
+          {currentChar && (
+            <span className="text-[10px] text-accent font-bold tracking-wider">{currentChar.name.toUpperCase()}</span>
+          )}
         </div>
 
+        {/* Right equip column */}
         <div className="flex flex-col gap-2">
-          {rightSlots.map(s => <EquipSlot key={s.type} slotType={s.type} label={s.label} onHover={onHover} onLeave={onLeave} />)}
+          {rightSlots.map(s => <EquipSlot key={s.type} slotType={s.type} label={s.label} icon={s.icon} onHover={onHover} onLeave={onLeave} />)}
         </div>
       </div>
 
-      <div className="flex justify-center gap-1.5 mt-2.5 p-2.5 bg-game-slot/30 rounded">
-        {accessorySlots.map(s => <EquipSlot key={s.type} slotType={s.type} label={s.label} onHover={onHover} onLeave={onLeave} />)}
-      </div>
-
-      {/* Character thumbnails */}
-      <div className="flex justify-center gap-2 mt-3">
-        {genderChars.map(c => (
-          <button key={c.id} onClick={() => setSelectedCharacter(c.id)}
-            className={`w-10 h-10 border-2 overflow-hidden transition-all ${
-              c.id === state.selectedCharacterId ? 'border-accent shadow-[0_0_8px_hsl(var(--game-gold)/0.5)]' : 'border-game-slot-border opacity-60 hover:opacity-100'
-            }`}>
-            <img src={c.img} alt={c.name} className="w-full h-full object-cover object-top" width={40} height={40} />
-          </button>
-        ))}
+      {/* Accessories row */}
+      <div className="flex justify-center gap-2 mt-3 p-3 bg-game-slot/20 rounded-lg border border-game-slot-border/30">
+        {accessorySlots.map(s => <EquipSlot key={s.type} slotType={s.type} label={s.label} icon={s.icon} onHover={onHover} onLeave={onLeave} />)}
       </div>
 
       {/* Stats Panel */}
