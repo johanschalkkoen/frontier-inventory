@@ -5,6 +5,7 @@ import { STANDARD_STATS, type SlotType } from '@/data/gameData';
 import { characters } from '@/data/characters';
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { PaperDoll } from './PaperDoll';
 
 const leftSlots: { type: SlotType; label: string }[] = [
   { type: 'hat', label: 'Hat' }, { type: 'bandana', label: 'Mask' },
@@ -74,15 +75,14 @@ export function CharacterSection() {
 
         {/* Character sprite with arrows */}
         <div className="flex flex-col items-center gap-1">
-          <div className="relative w-[155px] h-[344px] bg-game-slot border-2 border-game-slot overflow-hidden">
-            <img src={currentChar.img} alt={currentChar.name}
-                 className="w-full h-full object-cover" width={155} height={344} />
+          <div className="relative">
+            <PaperDoll />
             <button onClick={() => cycleChar(-1)}
-              className="absolute left-0 top-1/2 -translate-y-1/2 bg-game-slot/80 hover:bg-primary/80 p-0.5 transition-colors">
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-game-slot/80 hover:bg-primary/80 p-0.5 transition-colors">
               <ChevronLeft className="w-4 h-4 text-accent" />
             </button>
             <button onClick={() => cycleChar(1)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 bg-game-slot/80 hover:bg-primary/80 p-0.5 transition-colors">
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-game-slot/80 hover:bg-primary/80 p-0.5 transition-colors">
               <ChevronRight className="w-4 h-4 text-accent" />
             </button>
           </div>
