@@ -20,7 +20,6 @@ interface GameState {
   totalXp: number;
   completedMissions: string[];
   selectedRegionId: string | null;
-  // Character creation data
   characterName: string;
   archetypeId: string;
   traitPoints: Record<string, number>;
@@ -43,6 +42,9 @@ interface GameContextType {
   completeMission: (missionId: string) => void;
   setSelectedRegion: (regionId: string | null) => void;
   isMissionCompleted: (missionId: string) => boolean;
+  buyItem: (itemId: string, price: number) => boolean;
+  sellItem: (itemId: string, sellPrice: number) => boolean;
+  hasItem: (itemId: string) => boolean;
   loaded: boolean;
 }
 
@@ -76,7 +78,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded] = useState(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
-  // Load progress + character from DB when user logs in
   useEffect(() => {
     if (!user) {
       setState(defaultState());
@@ -195,18 +196,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const getCalculatedStats = useCallback(() => {
     const playerLevel = getLevelFromXp(state.totalXp);
     const current = { ...STANDARD_STATS };
-    // Level bonuses
     for (const key of Object.keys(current)) {
       current[key] += (playerLevel.level - 1) * 2;
     }
-    // Archetype bonuses
     const arch = archetypes.find(a => a.id === state.archetypeId);
     if (arch) {
       for (const [s, v] of Object.entries(arch.bonusStats)) {
         if (s in current) current[s] += v;
       }
     }
-    // Trait point bonuses
     for (const [traitName, pts] of Object.entries(state.traitPoints)) {
       const mapping = TRAIT_STAT_MAP[traitName as TraitCategory];
       if (mapping && typeof pts === 'number') {
@@ -215,7 +213,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
       }
     }
-    // Equipment bonuses
     itemDatabase.forEach(item => {
       const loc = state.itemLocations[item.id];
       if (loc?.area === 'equipped') {
@@ -228,8 +225,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [state.itemLocations, state.totalXp, state.archetypeId, state.traitPoints]);
 
   const getCoinTotal = useCallback(() => {
-    return itemDatabase.reduce((sum, item) => sum + item.value, 0);
-  }, []);
+    // Sum values of owned items only
+    return itemDatabase.reduce((sum, item) => {
+      const loc = state.itemLocations[item.id];
+      if (loc) return sum + item.value;
+      return sum;
+    }, 0);
+  }, [state.itemLocations]);
 
   const getBagCount = useCallback((bag: 'bag-left' | 'bag-right') => {
     return Object.values(state.itemLocations).filter(loc => loc.area === bag).length;
@@ -238,6 +240,47 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const getPlayerLevel = useCallback(() => {
     return getLevelFromXp(state.totalXp);
   }, [state.totalXp]);
+
+  const buyItem = useCallback((itemId: string, price: number): boolean => {
+    let success = false;
+    setState(s => {
+      if (s.walletAmount < price) return s;
+      if (s.itemLocations[itemId]) return s; // already owned
+      // Check bag space
+      const leftCount = Object.values(s.itemLocations).filter(l => l.area === 'bag-left').length;
+      const rightCount = Object.values(s.itemLocations).filter(l => l.area === 'bag-right').length;
+      const targetBag: 'bag-left' | 'bag-right' = leftCount <= rightCount ? 'bag-left' : 'bag-right';
+      const targetCount = targetBag === 'bag-left' ? leftCount : rightCount;
+      if (targetCount >= 20) return s; // bags full
+      success = true;
+      return {
+        ...s,
+        walletAmount: s.walletAmount - price,
+        itemLocations: { ...s.itemLocations, [itemId]: { area: targetBag } },
+      };
+    });
+    return success;
+  }, []);
+
+  const sellItem = useCallback((itemId: string, sellPrice: number): boolean => {
+    let success = false;
+    setState(s => {
+      if (!s.itemLocations[itemId]) return s; // don't own it
+      const newLocs = { ...s.itemLocations };
+      delete newLocs[itemId];
+      success = true;
+      return {
+        ...s,
+        walletAmount: s.walletAmount + sellPrice,
+        itemLocations: newLocs,
+      };
+    });
+    return success;
+  }, []);
+
+  const hasItem = useCallback((itemId: string): boolean => {
+    return !!state.itemLocations[itemId];
+  }, [state.itemLocations]);
 
   const completeMission = useCallback((missionId: string) => {
     setState(s => {
@@ -269,7 +312,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     <GameContext.Provider value={{
       state, setGender, setSelectedCharacter, setActiveTab, equipItem, unequipItem, moveItem,
       getItemsInLocation, getEquippedItem, getCalculatedStats, getCoinTotal, getBagCount,
-      getPlayerLevel, completeMission, setSelectedRegion, isMissionCompleted, loaded,
+      getPlayerLevel, completeMission, setSelectedRegion, isMissionCompleted,
+      buyItem, sellItem, hasItem, loaded,
     }}>
       {children}
     </GameContext.Provider>
