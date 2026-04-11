@@ -58,7 +58,9 @@ interface GameContextType {
   buyItem: (itemId: string, price: number) => boolean;
   sellItem: (itemId: string, sellPrice: number) => boolean;
   hasItem: (itemId: string) => boolean;
-  processEncounter: () => 'success' | 'fail' | 'none';
+  processEncounter: (action: 'fight' | 'evade' | 'flee') => 'success' | 'fail' | 'none';
+  abortQuest: () => void;
+  useHealItem: (itemId: string) => void;
   loaded: boolean;
 }
 
@@ -327,10 +329,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return started;
   }, []);
 
-  const processEncounter = useCallback((): 'success' | 'fail' | 'none' => {
+  const processEncounter = useCallback((action: 'fight' | 'evade' | 'flee'): 'success' | 'fail' | 'none' => {
     let result: 'success' | 'fail' | 'none' = 'none';
     setState(s => {
-      if (!s.activeQuest || s.activeQuest.status !== 'encounter') return s;
+      if (!s.activeQuest || (s.activeQuest.status !== 'traveling' && s.activeQuest.status !== 'encounter')) return s;
       const quest = { ...s.activeQuest };
       const encounter = quest.encounters[quest.currentEncounterIndex];
       if (!encounter) return s;
@@ -350,19 +352,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return current;
       })();
 
-      // Combat calculation: player power vs encounter difficulty
       const playerPower = (stats.damage || 10) + (stats.defense || 0) + (stats.speed || 0) + (stats.luck || 0);
       const encounterPower = encounter.difficulty * 15 + Math.random() * 20;
-      const success = playerPower + Math.random() * 30 > encounterPower;
+
+      let success = false;
+      if (action === 'fight') {
+        success = playerPower + Math.random() * 30 > encounterPower;
+      } else if (action === 'evade') {
+        // Evade uses speed + luck, harder than fight
+        const evadePower = (stats.speed || 5) * 2 + (stats.luck || 0) * 1.5;
+        success = evadePower + Math.random() * 25 > encounterPower * 0.8;
+      } else if (action === 'flee') {
+        // Flee: high chance but lose some progress
+        success = (stats.speed || 5) + Math.random() * 40 > encounterPower * 0.5;
+      }
 
       if (success) {
-        quest.log = [...quest.log, `⚔️ ${encounter.name}: VICTORY! You overcame the ${encounter.type}.`];
+        const actionWord = action === 'fight' ? 'VICTORY' : action === 'evade' ? 'EVADED' : 'ESCAPED';
+        quest.log = [...quest.log, `${action === 'fight' ? '⚔️' : '🏃'} ${encounter.name}: ${actionWord}!`];
         quest.currentEncounterIndex++;
+        quest.status = 'traveling';
         if (quest.currentEncounterIndex >= quest.encounters.length) {
-          quest.status = 'traveling';
-          quest.log = [...quest.log, '🏇 Back on the trail...'];
-        } else {
-          quest.status = 'traveling';
+          quest.log = [...quest.log, '🏇 All encounters cleared! Heading to destination...'];
         }
         result = 'success';
       } else {
@@ -374,6 +385,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return { ...s, activeQuest: quest };
     });
     return result;
+  }, []);
+
+  const abortQuest = useCallback(() => {
+    setState(s => ({ ...s, activeQuest: null }));
+  }, []);
+
+  const useHealItem = useCallback((itemId: string) => {
+    setState(s => {
+      if (!s.itemLocations[itemId]) return s;
+      const newLocs = { ...s.itemLocations };
+      delete newLocs[itemId];
+      // Heal effect is implicit - item consumed
+      const quest = s.activeQuest ? {
+        ...s.activeQuest,
+        log: [...s.activeQuest.log, `❤️ Used ${itemDatabase.find(i => i.id === itemId)?.name || 'item'} to restore health.`],
+      } : null;
+      return { ...s, itemLocations: newLocs, activeQuest: quest };
+    });
   }, []);
 
   const buyItem = useCallback((itemId: string, price: number): boolean => {
@@ -448,7 +477,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       state, setGender, setSelectedCharacter, setActiveTab, equipItem, unequipItem, moveItem,
       getItemsInLocation, getEquippedItem, getCalculatedStats, getCoinTotal, getBagCount,
       getPlayerLevel, startMission, completeMission, setSelectedRegion, isMissionCompleted,
-      buyItem, sellItem, hasItem, processEncounter, loaded,
+      buyItem, sellItem, hasItem, processEncounter, abortQuest, useHealItem, loaded,
     }}>
       {children}
     </GameContext.Provider>
