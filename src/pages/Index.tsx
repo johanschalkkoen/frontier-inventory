@@ -6,6 +6,7 @@ import { InventoryBag } from '@/components/game/InventoryBag';
 import { WorldMap } from '@/components/game/WorldMap';
 import { LoginPage } from '@/pages/Login';
 import { CharacterCreation } from '@/components/game/CharacterCreation';
+import { ShopSection } from '@/components/game/ShopSection';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 
@@ -35,12 +36,7 @@ function GameContent() {
             </>
           )}
           {state.activeTab === 'MAPS' && <WorldMap />}
-          {state.activeTab === 'SHOP' && (
-            <div className="flex-1 bg-game-panel border-2 border-game-slot p-8 text-center">
-              <h2 className="font-display text-xl font-bold text-accent mb-4">GENERAL STORE</h2>
-              <p className="text-muted-foreground text-sm">Coming soon — buy and sell gear with your coins.</p>
-            </div>
-          )}
+          {state.activeTab === 'SHOP' && <ShopSection />}
         </div>
       </div>
     </div>
