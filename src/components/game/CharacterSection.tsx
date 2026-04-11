@@ -1,6 +1,7 @@
 import { useGame } from '@/context/GameContext';
 import { StatusBar } from './StatusBar';
 import { EquipSlot } from './EquipSlot';
+import { PaperDoll } from './PaperDoll';
 import { STANDARD_STATS, type SlotType } from '@/data/gameData';
 import { characters } from '@/data/characters';
 import { useState } from 'react';
@@ -72,17 +73,16 @@ export function CharacterSection() {
           {leftSlots.map(s => <EquipSlot key={s.type} slotType={s.type} label={s.label} onHover={onHover} onLeave={onLeave} />)}
         </div>
 
-        {/* Character sprite with arrows */}
+        {/* Paper Doll with character cycling */}
         <div className="flex flex-col items-center gap-1">
-          <div className="relative w-[155px] h-[344px] bg-game-slot border-2 border-game-slot overflow-hidden">
-            <img src={currentChar.img} alt={currentChar.name}
-                 className="w-full h-full object-cover" width={155} height={344} />
+          <div className="relative">
+            <PaperDoll />
             <button onClick={() => cycleChar(-1)}
-              className="absolute left-0 top-1/2 -translate-y-1/2 bg-game-slot/80 hover:bg-primary/80 p-0.5 transition-colors">
+              className="absolute left-0 top-1/2 -translate-y-1/2 bg-game-slot/80 hover:bg-primary/80 p-0.5 transition-colors z-20">
               <ChevronLeft className="w-4 h-4 text-accent" />
             </button>
             <button onClick={() => cycleChar(1)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 bg-game-slot/80 hover:bg-primary/80 p-0.5 transition-colors">
+              className="absolute right-0 top-1/2 -translate-y-1/2 bg-game-slot/80 hover:bg-primary/80 p-0.5 transition-colors z-20">
               <ChevronRight className="w-4 h-4 text-accent" />
             </button>
           </div>
@@ -121,7 +121,7 @@ export function CharacterSection() {
             <div key={k} className="grid grid-cols-[2fr_1fr_1fr] text-[10px] py-0.5">
               <span>{k.toUpperCase()}</span>
               <span>{base}</span>
-              <span className={v > base ? 'text-rarity-advanced font-bold' : ''}>{v}</span>
+              <span className={v > base ? 'text-rarity-advanced font-bold' : v < base ? 'text-destructive font-bold' : ''}>{v}</span>
             </div>
           );
         })}
