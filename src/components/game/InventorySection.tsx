@@ -13,7 +13,7 @@ export function InventorySection() {
   return (
     <div className="flex-1">
       <h2 className="font-display text-xl font-bold text-accent mb-3 drop-shadow-[2px_2px_0px_rgba(0,0,0,0.8)]">
-        📦 INVENTORY
+        ⊞ INVENTORY
       </h2>
 
       {/* Summary stats */}

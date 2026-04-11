@@ -33,11 +33,11 @@ const BUY_CATEGORIES: { key: ItemCategory | 'horses' | 'tack' | 'properties'; la
 ];
 
 const SHOP_FILTERS = [
-  { key: 'all', label: 'All Shops', icon: '🏪' },
-  { key: 'shop-general', label: 'General Store', icon: '🏪' },
-  { key: 'shop-livery', label: 'Livery Stable', icon: '🐴' },
-  { key: 'shop-saddle', label: 'Saddle Shop', icon: '🪶' },
-  { key: 'shop-auction', label: 'Auction House', icon: '🔔' },
+  { key: 'all', label: 'All Shops', icon: '⊞' },
+  { key: 'shop-general', label: 'General Store', icon: '⊞' },
+  { key: 'shop-livery', label: 'Livery Stable', icon: '⊳' },
+  { key: 'shop-saddle', label: 'Saddle Shop', icon: '∿' },
+  { key: 'shop-auction', label: 'Auction House', icon: '✦' },
 ];
 
 export function ShopSection() {
