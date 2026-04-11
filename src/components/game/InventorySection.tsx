@@ -39,16 +39,16 @@ export function InventorySection() {
 
       {/* All Assets */}
       <div className="space-y-3">
-        <AssetSection title="🏚️ PROPERTIES & LAND" items={propertyDatabase.map(p => ({
+        <AssetSection title="⌂ PROPERTIES & LAND" items={propertyDatabase.map(p => ({
           name: p.name, detail: p.type, cost: p.cost, owned: false,
         }))} />
-        <AssetSection title="🔧 RANCH ADD-ONS" items={propertyAddOns.map(a => ({
+        <AssetSection title="⚒ RANCH ADD-ONS" items={propertyAddOns.map(a => ({
           name: `${a.icon} ${a.name}`, detail: a.benefits.slice(0, 40) + '...', cost: a.cost, owned: false,
         }))} />
-        <AssetSection title="🐴 HORSES" items={horseDatabase.map(h => ({
+        <AssetSection title="⊳ HORSES" items={horseDatabase.map(h => ({
           name: h.name, detail: `${h.breed} · ${h.rarity}`, cost: h.value, owned: h.value === 0,
         }))} />
-        <AssetSection title="🪶 TACK & GEAR" items={tackDatabase.map(t => ({
+        <AssetSection title="∿ TACK & GEAR" items={tackDatabase.map(t => ({
           name: t.name, detail: t.category, cost: t.value, owned: false,
         }))} />
       </div>

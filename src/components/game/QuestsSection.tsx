@@ -155,7 +155,7 @@ export function QuestsSection() {
                   <span className="text-muted-foreground text-[9px] block">{m.regionName} — {story.location}</span>
                   <div className="flex gap-2 mt-0.5 flex-wrap">
                     <span className="text-[8px] text-primary">▸ {m.type}</span>
-                    <span className="text-[8px] text-primary">⏱ {travelTime}min {playerHasHorse ? '🐴' : '🚶'}</span>
+                    <span className="text-[8px] text-primary">⏱ {travelTime}min {playerHasHorse ? '⊳ Horse' : '⊥ On foot'}</span>
                     <span className={`text-[8px] ${risk.color}`}>⚠ {risk.label}</span>
                     {m.encounters && <span className="text-[8px] text-destructive/80">⚔ {m.encounters.length} encounters</span>}
                   </div>
@@ -200,9 +200,9 @@ export function QuestsSection() {
                     </div>
                   </div>
                   <div className="flex gap-3 mb-1 flex-wrap text-[8px]">
-                    <span className="text-muted-foreground">🚶 Walk: {Math.ceil(m.durationMinutes * 1.5)}min</span>
-                    <span className="text-accent">🐴 Ride: {Math.ceil(m.durationMinutes * 0.6)}min</span>
-                    <span className={risk.color}>⚠ Risk: {risk.label} (⚡-{risk.energyCost} ❤️-{risk.healthRisk})</span>
+                    <span className="text-muted-foreground">⊥ Walk: {Math.ceil(m.durationMinutes * 1.5)}min</span>
+                    <span className="text-accent">⊳ Ride: {Math.ceil(m.durationMinutes * 0.6)}min</span>
+                    <span className={risk.color}>⚠ Risk: {risk.label} (Energy -{risk.energyCost} Health -{risk.healthRisk})</span>
                   </div>
                   {m.requirements && m.requirements.length > 0 && (
                     <div className="mb-1">

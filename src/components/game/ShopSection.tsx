@@ -328,7 +328,7 @@ function HorseDetail({ itemId, priceMultiplier, wallet }: { itemId: string; pric
         <button disabled={wallet < price && price > 0}
           className="px-6 py-2.5 bg-accent text-accent-foreground font-display font-bold text-sm hover:bg-primary transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
           onClick={() => toast.info('Horse stable system coming soon!')}>
-          {wallet < price && price > 0 ? '💸 CANT AFFORD' : price === 0 ? '🤝 CLAIM' : '🐴 BUY'}
+          {wallet < price && price > 0 ? '— CANT AFFORD' : price === 0 ? '— CLAIM' : '⊳ BUY'}
         </button>
       </div>
     </div>
@@ -366,7 +366,7 @@ function TackDetail({ itemId, priceMultiplier, wallet }: { itemId: string; price
         <button disabled={wallet < price}
           className="px-6 py-2.5 bg-accent text-accent-foreground font-display font-bold text-sm hover:bg-primary transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
           onClick={() => toast.info('Tack system coming soon!')}>
-          {wallet < price ? '💸 CANT AFFORD' : '🪶 BUY'}
+          {wallet < price ? '— CANT AFFORD' : '∿ BUY'}
         </button>
       </div>
     </div>
@@ -404,7 +404,7 @@ function PropertyDetail({ itemId, playerLevel, wallet }: { itemId: string; playe
         <button disabled={!canBuy}
           className="px-6 py-2.5 bg-accent text-accent-foreground font-display font-bold text-sm hover:bg-primary transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
           onClick={() => canBuy && toast.info('Property system coming soon!')}>
-          {playerLevel < prop.levelRequired ? `🔒 NEED LVL ${prop.levelRequired}` : !canBuy ? '💸 CANT AFFORD' : '🏚️ BUY'}
+          {playerLevel < prop.levelRequired ? `NEED LVL ${prop.levelRequired}` : !canBuy ? '— CANT AFFORD' : '⌂ BUY'}
         </button>
       </div>
     </div>
