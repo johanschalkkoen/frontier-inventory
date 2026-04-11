@@ -5,7 +5,7 @@ import { STANDARD_STATS, type SlotType } from '@/data/gameData';
 import { characters } from '@/data/characters';
 import { archetypes } from '@/data/archetypes';
 import { useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,10 +28,10 @@ const leftSlots: { type: SlotType; label: string; icon: string }[] = [
   { type: 'boots', label: 'Boots', icon: '🥾' },
 ];
 const rightSlots: { type: SlotType; label: string; icon: string }[] = [
-  { type: 'sidearm', label: 'Pistol', icon: '🔫' },
+  { type: 'sidearm', label: 'Pistol', icon: '⚔️' },
   { type: 'longarm', label: 'Rifle', icon: '🎯' },
   { type: 'knife', label: 'Blade', icon: '🗡️' },
-  { type: 'gunbelt', label: 'Belt', icon: '⚔️' },
+  { type: 'gunbelt', label: 'Belt', icon: '🪢' },
   { type: 'rope', label: 'Lasso', icon: '🪢' },
   { type: 'canteen', label: 'Water', icon: '🫗' },
   { type: 'tobacco', label: 'Smoke', icon: '🚬' },
@@ -54,15 +54,16 @@ export function CharacterSection({ onDeleteCharacter }: CharacterSectionProps) {
   const onHover = (e: React.MouseEvent, name: string, value: number) => setTooltip({ x: e.clientX, y: e.clientY, name, value });
   const onLeave = () => setTooltip(null);
 
-  // Only show the character chosen at creation
   const currentChar = characters.find(c => c.id === state.selectedCharacterId);
   const xpPct = xpToNext > 0 ? (currentXp / xpToNext) * 100 : 0;
   const archetype = archetypes.find(a => a.id === state.archetypeId);
 
   const [deleteStep, setDeleteStep] = useState(0);
+  const [showBackstory, setShowBackstory] = useState(false);
 
   return (
-    <div className="w-[360px] flex-shrink-0">
+    <div className="w-[400px] flex-shrink-0">
+      {/* Character Name & Delete */}
       <div className="flex items-center justify-between mb-0.5">
         <div className="flex-1" />
         <h1 className="font-display text-2xl font-black text-accent tracking-wider text-center drop-shadow-[2px_2px_0px_rgba(0,0,0,0.8)]">
@@ -111,7 +112,7 @@ export function CharacterSection({ onDeleteCharacter }: CharacterSectionProps) {
                   <AlertDialogHeader>
                     <AlertDialogTitle className="text-destructive font-display text-xl">🔥 Final Warning</AlertDialogTitle>
                     <AlertDialogDescription className="text-foreground/80">
-                      <p>Are you <strong>absolutely sure</strong>? Type nothing will bring <strong className="text-accent">{state.characterName}</strong> back.</p>
+                      <p>Are you <strong>absolutely sure</strong>? Nothing will bring <strong className="text-accent">{state.characterName}</strong> back.</p>
                       <p className="text-destructive font-bold text-sm mt-2">All data will be permanently erased.</p>
                     </AlertDialogDescription>
                   </AlertDialogHeader>
@@ -136,7 +137,7 @@ export function CharacterSection({ onDeleteCharacter }: CharacterSectionProps) {
       )}
 
       {/* Level & XP Bar */}
-      <div className="mb-3 bg-game-slot/50 p-2 border border-game-slot-border">
+      <div className="mb-3 bg-game-slot/50 p-2 border-2 border-game-slot-border" style={{ borderImage: 'linear-gradient(135deg, hsl(var(--primary)/0.5), hsl(var(--accent)/0.3)) 1' }}>
         <div className="flex justify-between items-center mb-1">
           <span className="text-accent font-display font-bold text-sm">LEVEL {level}</span>
           <span className="text-[9px] text-muted-foreground">{currentXp} / {xpToNext} XP</span>
@@ -167,15 +168,26 @@ export function CharacterSection({ onDeleteCharacter }: CharacterSectionProps) {
           {leftSlots.map(s => <EquipSlot key={s.type} slotType={s.type} label={s.label} icon={s.icon} onHover={onHover} onLeave={onLeave} />)}
         </div>
 
-        {/* Character portrait - single, locked */}
+        {/* Character portrait */}
         <div className="flex flex-col items-center gap-1">
-          <div className="relative w-[155px] h-[344px] bg-game-slot border-2 border-primary/40 overflow-hidden rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.5),inset_0_0_30px_rgba(0,0,0,0.3)]">
+          <div className="relative w-[155px] h-[344px] bg-game-slot overflow-hidden"
+            style={{
+              border: '3px solid transparent',
+              borderImage: 'linear-gradient(180deg, hsl(var(--accent)), hsl(var(--primary)/0.5), hsl(var(--accent)/0.3)) 1',
+              boxShadow: '0 0 25px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.4), 0 0 15px hsl(var(--accent)/0.15)',
+            }}>
             {currentChar && (
               <img src={currentChar.img} alt={currentChar.name}
                    className="w-full h-full object-cover" width={155} height={344} />
             )}
-            {/* Vignette overlay */}
             <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.6)] pointer-events-none" />
+            {/* Corner ornaments */}
+            {['top-0 left-0', 'top-0 right-0', 'bottom-0 left-0', 'bottom-0 right-0'].map((pos, i) => (
+              <div key={i} className={`absolute ${pos} w-3 h-3`} style={{
+                background: 'radial-gradient(circle at 50% 50%, hsl(var(--accent)), transparent)',
+                opacity: 0.6,
+              }} />
+            ))}
           </div>
           {currentChar && (
             <span className="text-[10px] text-accent font-bold tracking-wider">{currentChar.name.toUpperCase()}</span>
@@ -189,12 +201,43 @@ export function CharacterSection({ onDeleteCharacter }: CharacterSectionProps) {
       </div>
 
       {/* Accessories row */}
-      <div className="flex justify-center gap-2 mt-3 p-3 bg-game-slot/20 rounded-lg border border-game-slot-border/30">
+      <div className="flex justify-center gap-2 mt-3 p-3 bg-game-slot/20 border border-game-slot-border/30"
+        style={{ borderImage: 'linear-gradient(90deg, transparent, hsl(var(--primary)/0.3), transparent) 1' }}>
         {accessorySlots.map(s => <EquipSlot key={s.type} slotType={s.type} label={s.label} icon={s.icon} onHover={onHover} onLeave={onLeave} />)}
       </div>
 
+      {/* Backstory Section */}
+      {archetype && (
+        <div className="mt-3 border-2 border-game-slot-border overflow-hidden" style={{ borderImage: 'linear-gradient(135deg, hsl(var(--accent)/0.4), hsl(var(--primary)/0.2)) 1' }}>
+          <button
+            onClick={() => setShowBackstory(!showBackstory)}
+            className="w-full flex items-center justify-between p-2.5 bg-game-slot/60 hover:bg-game-slot/80 transition-colors"
+          >
+            <span className="font-display text-xs font-bold text-primary tracking-wider">📜 BACKSTORY — {archetype.name.toUpperCase()}</span>
+            {showBackstory ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+          </button>
+          {showBackstory && (
+            <div className="p-3 bg-game-slot/30 animate-fade-in">
+              <div className="flex gap-2 mb-2 flex-wrap">
+                {archetype.skills.map(s => (
+                  <span key={s} className="text-[8px] px-1.5 py-0.5 bg-primary/20 text-primary border border-primary/30 font-bold">{s}</span>
+                ))}
+              </div>
+              <p className="text-foreground/80 text-xs leading-relaxed italic">
+                "{archetype.backstory}"
+              </p>
+              <div className="mt-2 flex gap-2 flex-wrap">
+                {archetype.traits.map(t => (
+                  <span key={t} className="text-[9px] px-2 py-0.5 bg-accent/10 text-accent border border-accent/30 font-bold">{t}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Stats Panel */}
-      <div className="mt-3 bg-game-slot p-2.5 border border-game-slot-border">
+      <div className="mt-3 bg-game-slot p-2.5 border-2 border-game-slot-border" style={{ borderImage: 'linear-gradient(180deg, hsl(var(--primary)/0.4), hsl(var(--accent)/0.2)) 1' }}>
         <div className="grid grid-cols-[2fr_1fr_1fr] text-[9px] text-primary border-b border-game-slot-border mb-1 pb-1">
           <span>Attribute</span><span>Base</span><span>Total</span>
         </div>
