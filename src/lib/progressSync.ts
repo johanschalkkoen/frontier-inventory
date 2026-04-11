@@ -1,12 +1,13 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { SlotType } from '@/data/gameData';
+import type { Json } from '@/integrations/supabase/types';
 
 interface ItemLocation {
   area: 'bag-left' | 'bag-right' | 'equipped';
   slotType?: SlotType;
 }
 
-interface SaveData {
+export interface SaveData {
   gender: string;
   selectedCharacterId: string;
   totalXp: number;
@@ -33,10 +34,6 @@ export async function loadProgress(userId: string): Promise<SaveData | null> {
     itemLocations: (data.item_locations as unknown as Record<string, ItemLocation>) || {},
   };
 }
-    completedMissions: data.completed_missions || [],
-    itemLocations: (data.item_locations as Record<string, ItemLocation>) || {},
-  };
-}
 
 export async function saveProgress(userId: string, state: SaveData): Promise<void> {
   const { error } = await supabase
@@ -47,7 +44,7 @@ export async function saveProgress(userId: string, state: SaveData): Promise<voi
       total_xp: state.totalXp,
       wallet_amount: state.walletAmount,
       completed_missions: state.completedMissions,
-      item_locations: state.itemLocations as unknown as Record<string, unknown>,
+      item_locations: state.itemLocations as unknown as Json,
     })
     .eq('user_id', userId);
 
