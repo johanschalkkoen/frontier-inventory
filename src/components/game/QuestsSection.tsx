@@ -132,27 +132,18 @@ function ActiveQuestPanel({ quest, onProcess, onComplete }: {
     return null;
   })();
 
-  if (!mission) return null;
-
   const elapsed = now - quest.startTime;
   const total = quest.endTime - quest.startTime;
-  const progress = Math.min(100, (elapsed / total) * 100);
+  const progress = mission ? Math.min(100, (elapsed / total) * 100) : 0;
   const timeLeft = Math.max(0, quest.endTime - now);
   const minutesLeft = Math.floor(timeLeft / 60000);
   const secondsLeft = Math.floor((timeLeft % 60000) / 1000);
 
-  // Check if an encounter should trigger
   const encounterInterval = total / (quest.encounters.length + 1);
   const expectedEncounters = Math.min(quest.encounters.length, Math.floor(elapsed / encounterInterval));
   const needsEncounter = quest.status === 'traveling' && quest.currentEncounterIndex < expectedEncounters;
 
-  // Auto-trigger encounter state
-  useEffect(() => {
-    if (needsEncounter && quest.status === 'traveling') {
-      // Set status to encounter - but we can't setState here directly
-      // The parent should handle this
-    }
-  }, [needsEncounter, quest.status]);
+  if (!mission) return null;
 
   const isComplete = progress >= 100 && quest.currentEncounterIndex >= quest.encounters.length;
   const currentEncounter = quest.encounters[quest.currentEncounterIndex];
