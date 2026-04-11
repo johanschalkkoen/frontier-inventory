@@ -3,6 +3,8 @@ import { type GameItem, type SlotType, itemDatabase, STANDARD_STATS } from '@/da
 import { getLevelFromXp, mapRegions, type Mission } from '@/data/mapData';
 import { useAuth } from './AuthContext';
 import { loadProgress, saveProgress, type SaveData } from '@/lib/progressSync';
+import { supabase } from '@/integrations/supabase/client';
+import { archetypes, TRAIT_STAT_MAP, type TraitCategory } from '@/data/archetypes';
 
 interface ItemLocation {
   area: 'bag-left' | 'bag-right' | 'equipped';
@@ -18,6 +20,10 @@ interface GameState {
   totalXp: number;
   completedMissions: string[];
   selectedRegionId: string | null;
+  // Character creation data
+  characterName: string;
+  archetypeId: string;
+  traitPoints: Record<string, number>;
 }
 
 interface GameContextType {
@@ -66,6 +72,9 @@ function defaultState(): GameState {
     totalXp: 0,
     completedMissions: [],
     selectedRegionId: null,
+    characterName: 'Outlaw',
+    archetypeId: 'jace',
+    traitPoints: {},
   };
 }
 
@@ -75,7 +84,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded] = useState(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
-  // Load progress from DB when user logs in
+  // Load progress + character from DB when user logs in
   useEffect(() => {
     if (!user) {
       setState(defaultState());
@@ -83,19 +92,46 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    loadProgress(user.id).then(data => {
-      if (data) {
-        const locs = Object.keys(data.itemLocations).length > 0 ? data.itemLocations : defaultLocations();
-        setState(s => ({
-          ...s,
-          gender: data.gender as 'male' | 'female',
-          selectedCharacterId: data.selectedCharacterId,
-          totalXp: data.totalXp,
-          walletAmount: data.walletAmount,
-          completedMissions: data.completedMissions,
-          itemLocations: locs as Record<string, ItemLocation>,
-        }));
-      }
+    Promise.all([
+      loadProgress(user.id),
+      supabase
+        .from('player_characters')
+        .select('character_name, archetype_id, portrait_id, trait_points')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .limit(1)
+        .single(),
+    ]).then(([progressData, charResult]) => {
+      setState(s => {
+        let next = { ...s };
+
+        if (progressData) {
+          const locs = Object.keys(progressData.itemLocations).length > 0 ? progressData.itemLocations : defaultLocations();
+          next = {
+            ...next,
+            gender: progressData.gender as 'male' | 'female',
+            selectedCharacterId: progressData.selectedCharacterId,
+            totalXp: progressData.totalXp,
+            walletAmount: progressData.walletAmount,
+            completedMissions: progressData.completedMissions,
+            itemLocations: locs as Record<string, ItemLocation>,
+          };
+        }
+
+        if (charResult.data) {
+          const arch = archetypes.find(a => a.id === charResult.data.archetype_id);
+          next = {
+            ...next,
+            characterName: charResult.data.character_name,
+            archetypeId: charResult.data.archetype_id,
+            traitPoints: (charResult.data.trait_points as Record<string, number>) || {},
+            selectedCharacterId: charResult.data.portrait_id || next.selectedCharacterId,
+            gender: arch?.gender || next.gender,
+          };
+        }
+
+        return next;
+      });
       setLoaded(true);
     });
   }, [user]);
@@ -168,9 +204,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const getCalculatedStats = useCallback(() => {
     const playerLevel = getLevelFromXp(state.totalXp);
     const current = { ...STANDARD_STATS };
+    // Level bonuses
     for (const key of Object.keys(current)) {
       current[key] += (playerLevel.level - 1) * 2;
     }
+    // Archetype bonuses
+    const arch = archetypes.find(a => a.id === state.archetypeId);
+    if (arch) {
+      for (const [s, v] of Object.entries(arch.bonusStats)) {
+        if (s in current) current[s] += v;
+      }
+    }
+    // Trait point bonuses
+    for (const [traitName, pts] of Object.entries(state.traitPoints)) {
+      const mapping = TRAIT_STAT_MAP[traitName as TraitCategory];
+      if (mapping && typeof pts === 'number') {
+        for (const [stat, mult] of Object.entries(mapping)) {
+          if (stat in current) current[stat] += pts * mult;
+        }
+      }
+    }
+    // Equipment bonuses
     itemDatabase.forEach(item => {
       const loc = state.itemLocations[item.id];
       if (loc?.area === 'equipped') {
@@ -180,7 +234,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     });
     return current;
-  }, [state.itemLocations, state.totalXp]);
+  }, [state.itemLocations, state.totalXp, state.archetypeId, state.traitPoints]);
 
   const getCoinTotal = useCallback(() => {
     return itemDatabase.reduce((sum, item) => sum + item.value, 0);

@@ -3,6 +3,7 @@ import { StatusBar } from './StatusBar';
 import { EquipSlot } from './EquipSlot';
 import { STANDARD_STATS, type SlotType } from '@/data/gameData';
 import { characters } from '@/data/characters';
+import { archetypes } from '@/data/archetypes';
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -47,11 +48,16 @@ export function CharacterSection() {
 
   const xpPct = xpToNext > 0 ? (currentXp / xpToNext) * 100 : 0;
 
+  const archetype = archetypes.find(a => a.id === state.archetypeId);
+
   return (
     <div className="w-[360px] flex-shrink-0">
-      <h1 className="font-display text-2xl font-black text-accent tracking-wider text-center mb-1 drop-shadow-[2px_2px_0px_rgba(0,0,0,0.8)]">
-        Frontier Legend
+      <h1 className="font-display text-2xl font-black text-accent tracking-wider text-center mb-0.5 drop-shadow-[2px_2px_0px_rgba(0,0,0,0.8)]">
+        {state.characterName || 'Frontier Legend'}
       </h1>
+      {archetype && (
+        <p className="text-center text-muted-foreground text-[10px] mb-1">{archetype.title} — {archetype.traits.join(' · ')}</p>
+      )}
 
       {/* Level & XP Bar */}
       <div className="mb-3 bg-game-slot/50 p-2 border border-game-slot-border">

@@ -5,6 +5,9 @@ import { CharacterSection } from '@/components/game/CharacterSection';
 import { InventoryBag } from '@/components/game/InventoryBag';
 import { WorldMap } from '@/components/game/WorldMap';
 import { LoginPage } from '@/pages/Login';
+import { CharacterCreation } from '@/components/game/CharacterCreation';
+import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
 
 function GameContent() {
   const { state, loaded } = useGame();
@@ -46,6 +49,24 @@ function GameContent() {
 
 function AuthGate() {
   const { user, loading } = useAuth();
+  const [hasCharacter, setHasCharacter] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setHasCharacter(null);
+      return;
+    }
+    // Check if user has a created character
+    supabase
+      .from('player_characters')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .limit(1)
+      .then(({ data }) => {
+        setHasCharacter(data && data.length > 0);
+      });
+  }, [user]);
 
   if (loading) {
     return (
@@ -56,6 +77,34 @@ function AuthGate() {
   }
 
   if (!user) return <LoginPage />;
+
+  if (hasCharacter === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-accent font-display text-xl animate-pulse">Loading your adventure...</div>
+      </div>
+    );
+  }
+
+  if (!hasCharacter) {
+    return (
+      <CharacterCreation
+        onComplete={async (data) => {
+          const { error } = await supabase.from('player_characters').insert({
+            user_id: user.id,
+            character_name: data.characterName,
+            archetype_id: data.archetypeId,
+            portrait_id: data.portraitId,
+            trait_points: data.traitPoints,
+            is_active: true,
+          });
+          if (!error) {
+            setHasCharacter(true);
+          }
+        }}
+      />
+    );
+  }
 
   return (
     <GameProvider>

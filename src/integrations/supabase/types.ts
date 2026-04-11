@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      player_characters: {
+        Row: {
+          archetype_id: string
+          character_name: string
+          created_at: string
+          id: string
+          is_active: boolean
+          portrait_id: string
+          skill_points: Json
+          trait_points: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archetype_id?: string
+          character_name?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          portrait_id?: string
+          skill_points?: Json
+          trait_points?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          archetype_id?: string
+          character_name?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          portrait_id?: string
+          skill_points?: Json
+          trait_points?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       player_progress: {
         Row: {
           completed_missions: string[]
