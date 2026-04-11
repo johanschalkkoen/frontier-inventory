@@ -11,6 +11,7 @@ import { PropertySection } from '@/components/game/PropertySection';
 import { QuestsSection } from '@/components/game/QuestsSection';
 import { ProfileSection } from '@/components/game/ProfileSection';
 import { SettingsSection } from '@/components/game/SettingsSection';
+import { InventorySection } from '@/components/game/InventorySection';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 
@@ -51,6 +52,7 @@ function GameContent() {
           {state.activeTab === 'SHOP' && <ShopSection />}
           {state.activeTab === 'PROPERTY' && <PropertySection />}
           {state.activeTab === 'QUESTS' && <QuestsSection />}
+          {state.activeTab === 'INVENTORY' && <InventorySection />}
           {state.activeTab === 'PROFILE' && <ProfileSection />}
           {state.activeTab === 'SETTINGS' && (
             <SettingsSection onDeleteCharacter={handleDeleteCharacter} />
