@@ -3,6 +3,8 @@ import { type GameItem, type SlotType, itemDatabase, STANDARD_STATS } from '@/da
 import { getLevelFromXp, mapRegions, type Mission } from '@/data/mapData';
 import { useAuth } from './AuthContext';
 import { loadProgress, saveProgress, type SaveData } from '@/lib/progressSync';
+import { supabase } from '@/integrations/supabase/client';
+import { archetypes, TRAIT_STAT_MAP, type TraitCategory } from '@/data/archetypes';
 
 interface ItemLocation {
   area: 'bag-left' | 'bag-right' | 'equipped';
