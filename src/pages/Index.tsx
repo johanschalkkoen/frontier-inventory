@@ -47,13 +47,7 @@ function GameContent() {
         <TopMenuBar />
         <div className="flex gap-6 items-start">
           {state.activeTab === 'CHARACTER' && (
-            <>
-              <CharacterSection onDeleteCharacter={handleDeleteCharacter} />
-              <div className="flex gap-4">
-                <InventoryBag bagId="bag-left" title="Left Saddlebag" />
-                <InventoryBag bagId="bag-right" title="Right Saddlebag" />
-              </div>
-            </>
+            <CharacterSection onDeleteCharacter={handleDeleteCharacter} />
           )}
           {state.activeTab === 'INVENTORY' && <InventorySection />}
           {state.activeTab === 'MAPS' && <WorldMap />}
