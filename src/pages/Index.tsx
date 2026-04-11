@@ -1,17 +1,15 @@
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { GameProvider, useGame } from '@/context/GameContext';
 import { TopMenuBar } from '@/components/game/TopMenuBar';
+import { TimeBar } from '@/components/game/TimeBar';
 import { CharacterSection } from '@/components/game/CharacterSection';
-// InventoryBag now only used in InventorySection
 import { InventorySection } from '@/components/game/InventorySection';
 import { WorldMap } from '@/components/game/WorldMap';
 import { LoginPage } from '@/pages/Login';
 import { CharacterCreation } from '@/components/game/CharacterCreation';
 import { ShopSection } from '@/components/game/ShopSection';
 import { PropertySection } from '@/components/game/PropertySection';
-import { TimeSection } from '@/components/game/TimeSection';
 import { QuestsSection } from '@/components/game/QuestsSection';
-import { RestSection } from '@/components/game/RestSection';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 
@@ -45,6 +43,7 @@ function GameContent() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="flex flex-col gap-5 p-6 bg-game-container border-4 border-game-slot shadow-[0_0_50px_rgba(0,0,0,0.8)] max-w-[1200px] w-full">
         <TopMenuBar />
+        <TimeBar />
         <div className="flex gap-6 items-start">
           {state.activeTab === 'CHARACTER' && (
             <CharacterSection onDeleteCharacter={handleDeleteCharacter} />
@@ -53,9 +52,7 @@ function GameContent() {
           {state.activeTab === 'MAPS' && <WorldMap />}
           {state.activeTab === 'SHOP' && <ShopSection />}
           {state.activeTab === 'PROPERTY' && <PropertySection />}
-          {state.activeTab === 'TIME' && <TimeSection />}
           {state.activeTab === 'QUESTS' && <QuestsSection />}
-          {state.activeTab === 'REST' && <RestSection />}
         </div>
       </div>
     </div>

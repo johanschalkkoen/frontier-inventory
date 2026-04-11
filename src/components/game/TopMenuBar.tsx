@@ -6,11 +6,9 @@ const tabs = [
   { icon: '🤠', label: 'CHARACTER' },
   { icon: '🎒', label: 'INVENTORY' },
   { icon: '🗺️', label: 'MAPS' },
+  { icon: '📜', label: 'QUESTS' },
   { icon: '⚖️', label: 'SHOP' },
   { icon: '🏠', label: 'PROPERTY' },
-  { icon: '🕐', label: 'TIME' },
-  { icon: '📜', label: 'QUESTS' },
-  { icon: '🏕️', label: 'REST' },
 ];
 
 export function TopMenuBar() {
