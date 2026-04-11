@@ -54,21 +54,13 @@ export function useGame() {
   return ctx;
 }
 
-function defaultLocations(): Record<string, ItemLocation> {
-  const locations: Record<string, ItemLocation> = {};
-  itemDatabase.forEach((item, i) => {
-    locations[item.id] = { area: i < 20 ? 'bag-left' : 'bag-right' };
-  });
-  return locations;
-}
-
 function defaultState(): GameState {
   return {
     gender: 'male',
     selectedCharacterId: 'male-0',
     activeTab: 'CHARACTER',
-    itemLocations: defaultLocations(),
-    walletAmount: 1250,
+    itemLocations: {},
+    walletAmount: 0,
     totalXp: 0,
     completedMissions: [],
     selectedRegionId: null,
@@ -106,7 +98,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
         let next = { ...s };
 
         if (progressData) {
-          const locs = Object.keys(progressData.itemLocations).length > 0 ? progressData.itemLocations : defaultLocations();
           next = {
             ...next,
             gender: progressData.gender as 'male' | 'female',
@@ -114,7 +105,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             totalXp: progressData.totalXp,
             walletAmount: progressData.walletAmount,
             completedMissions: progressData.completedMissions,
-            itemLocations: locs as Record<string, ItemLocation>,
+            itemLocations: (progressData.itemLocations as Record<string, ItemLocation>) || {},
           };
         }
 
