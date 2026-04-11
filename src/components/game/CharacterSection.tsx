@@ -3,6 +3,7 @@ import { StatusBar } from './StatusBar';
 import { EquipSlot } from './EquipSlot';
 import { STANDARD_STATS, type SlotType } from '@/data/gameData';
 import { characters } from '@/data/characters';
+import { archetypes } from '@/data/archetypes';
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
