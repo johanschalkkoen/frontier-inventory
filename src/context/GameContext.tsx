@@ -1,6 +1,8 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { type GameItem, type SlotType, itemDatabase, STANDARD_STATS } from '@/data/gameData';
 import { getLevelFromXp, mapRegions, type Mission } from '@/data/mapData';
+import { useAuth } from './AuthContext';
+import { loadProgress, saveProgress, type SaveData } from '@/lib/progressSync';
 
 interface ItemLocation {
   area: 'bag-left' | 'bag-right' | 'equipped';
@@ -35,6 +37,7 @@ interface GameContextType {
   completeMission: (missionId: string) => void;
   setSelectedRegion: (regionId: string | null) => void;
   isMissionCompleted: (missionId: string) => boolean;
+  loaded: boolean;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -45,23 +48,75 @@ export function useGame() {
   return ctx;
 }
 
-export function GameProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<GameState>(() => {
-    const locations: Record<string, ItemLocation> = {};
-    itemDatabase.forEach((item, i) => {
-      locations[item.id] = { area: i < 20 ? 'bag-left' : 'bag-right' };
-    });
-    return {
-      gender: 'male',
-      selectedCharacterId: 'male-0',
-      activeTab: 'CHARACTER',
-      itemLocations: locations,
-      walletAmount: 1250,
-      totalXp: 0,
-      completedMissions: [],
-      selectedRegionId: null,
-    };
+function defaultLocations(): Record<string, ItemLocation> {
+  const locations: Record<string, ItemLocation> = {};
+  itemDatabase.forEach((item, i) => {
+    locations[item.id] = { area: i < 20 ? 'bag-left' : 'bag-right' };
   });
+  return locations;
+}
+
+function defaultState(): GameState {
+  return {
+    gender: 'male',
+    selectedCharacterId: 'male-0',
+    activeTab: 'CHARACTER',
+    itemLocations: defaultLocations(),
+    walletAmount: 1250,
+    totalXp: 0,
+    completedMissions: [],
+    selectedRegionId: null,
+  };
+}
+
+export function GameProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const [state, setState] = useState<GameState>(defaultState);
+  const [loaded, setLoaded] = useState(false);
+  const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
+
+  // Load progress from DB when user logs in
+  useEffect(() => {
+    if (!user) {
+      setState(defaultState());
+      setLoaded(true);
+      return;
+    }
+
+    loadProgress(user.id).then(data => {
+      if (data) {
+        const locs = Object.keys(data.itemLocations).length > 0 ? data.itemLocations : defaultLocations();
+        setState(s => ({
+          ...s,
+          gender: data.gender as 'male' | 'female',
+          selectedCharacterId: data.selectedCharacterId,
+          totalXp: data.totalXp,
+          walletAmount: data.walletAmount,
+          completedMissions: data.completedMissions,
+          itemLocations: locs as Record<string, ItemLocation>,
+        }));
+      }
+      setLoaded(true);
+    });
+  }, [user]);
+
+  // Auto-save debounced
+  useEffect(() => {
+    if (!user || !loaded) return;
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    saveTimeout.current = setTimeout(() => {
+      const data: SaveData = {
+        gender: state.gender,
+        selectedCharacterId: state.selectedCharacterId,
+        totalXp: state.totalXp,
+        walletAmount: state.walletAmount,
+        completedMissions: state.completedMissions,
+        itemLocations: state.itemLocations,
+      };
+      saveProgress(user.id, data);
+    }, 2000);
+    return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
+  }, [user, loaded, state.gender, state.selectedCharacterId, state.totalXp, state.walletAmount, state.completedMissions, state.itemLocations]);
 
   const setGender = useCallback((g: 'male' | 'female') => {
     setState(s => ({ ...s, gender: g, selectedCharacterId: g === 'male' ? 'male-0' : 'female-0' }));
@@ -113,7 +168,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const getCalculatedStats = useCallback(() => {
     const playerLevel = getLevelFromXp(state.totalXp);
     const current = { ...STANDARD_STATS };
-    // Level bonuses: +2 to each base stat per level
     for (const key of Object.keys(current)) {
       current[key] += (playerLevel.level - 1) * 2;
     }
@@ -143,7 +197,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const completeMission = useCallback((missionId: string) => {
     setState(s => {
       if (s.completedMissions.includes(missionId)) return s;
-      // Find the mission to get rewards
       let mission: Mission | undefined;
       for (const region of mapRegions) {
         mission = region.missions.find(m => m.id === missionId);
@@ -171,7 +224,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     <GameContext.Provider value={{
       state, setGender, setSelectedCharacter, setActiveTab, equipItem, unequipItem, moveItem,
       getItemsInLocation, getEquippedItem, getCalculatedStats, getCoinTotal, getBagCount,
-      getPlayerLevel, completeMission, setSelectedRegion, isMissionCompleted,
+      getPlayerLevel, completeMission, setSelectedRegion, isMissionCompleted, loaded,
     }}>
       {children}
     </GameContext.Provider>

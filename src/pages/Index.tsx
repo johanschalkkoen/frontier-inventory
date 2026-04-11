@@ -1,11 +1,21 @@
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { GameProvider, useGame } from '@/context/GameContext';
 import { TopMenuBar } from '@/components/game/TopMenuBar';
 import { CharacterSection } from '@/components/game/CharacterSection';
 import { InventoryBag } from '@/components/game/InventoryBag';
 import { WorldMap } from '@/components/game/WorldMap';
+import { LoginPage } from '@/pages/Login';
 
 function GameContent() {
-  const { state } = useGame();
+  const { state, loaded } = useGame();
+
+  if (!loaded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-accent font-display text-xl animate-pulse">Loading your adventure...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -34,10 +44,30 @@ function GameContent() {
   );
 }
 
+function AuthGate() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-accent font-display text-xl animate-pulse">Saddling up...</div>
+      </div>
+    );
+  }
+
+  if (!user) return <LoginPage />;
+
+  return (
+    <GameProvider>
+      <GameContent />
+    </GameProvider>
+  );
+}
+
 const Index = () => (
-  <GameProvider>
-    <GameContent />
-  </GameProvider>
+  <AuthProvider>
+    <AuthGate />
+  </AuthProvider>
 );
 
 export default Index;
