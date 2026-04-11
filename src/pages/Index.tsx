@@ -1,16 +1,25 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { GameProvider } from '@/context/GameContext';
+import { TopMenuBar } from '@/components/game/TopMenuBar';
+import { CharacterSection } from '@/components/game/CharacterSection';
+import { InventoryBag } from '@/components/game/InventoryBag';
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
-    </div>
+    <GameProvider>
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <div className="flex flex-col gap-5 p-6 bg-game-container border-4 border-game-slot shadow-[0_0_50px_rgba(0,0,0,0.8)]">
+          <TopMenuBar />
+          <div className="flex gap-6 items-start">
+            <CharacterSection />
+            <div className="flex gap-4">
+              <InventoryBag bagId="bag-left" title="Left Saddlebag" />
+              <InventoryBag bagId="bag-right" title="Right Saddlebag" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </GameProvider>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
