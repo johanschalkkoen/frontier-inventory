@@ -5,6 +5,7 @@ import { STANDARD_STATS, type SlotType } from '@/data/gameData';
 import { characters } from '@/data/characters';
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { PaperDoll } from './PaperDoll';
 
 const leftSlots: { type: SlotType; label: string }[] = [
   { type: 'hat', label: 'Hat' }, { type: 'bandana', label: 'Mask' },
