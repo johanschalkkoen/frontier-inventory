@@ -39,7 +39,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<GameState>(() => {
     const locations: Record<string, ItemLocation> = {};
     itemDatabase.forEach((item, i) => {
-      locations[item.id] = { area: i < 10 ? 'bag-left' : 'bag-right' };
+      locations[item.id] = { area: i < 20 ? 'bag-left' : 'bag-right' };
     });
     return { gender: 'male', activeTab: 'CHARACTER', itemLocations: locations, walletAmount: 1250 };
   });
