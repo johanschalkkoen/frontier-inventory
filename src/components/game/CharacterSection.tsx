@@ -21,22 +21,22 @@ import {
 const leftSlots: { type: SlotType; label: string; icon: string }[] = [
   { type: 'hat', label: 'Hat', icon: '🤠' },
   { type: 'bandana', label: 'Mask', icon: '🎭' },
-  { type: 'shirt', label: 'Shirt', icon: '👕' },
-  { type: 'outerwear', label: 'Coat', icon: '🧥' },
+  { type: 'shirt', label: 'Shirt', icon: '👔' },
+  { type: 'outerwear', label: 'Duster', icon: '🧥' },
   { type: 'gloves', label: 'Gloves', icon: '🧤' },
-];
-const rightSlots: { type: SlotType; label: string; icon: string }[] = [
-  { type: 'sidearm', label: 'Sidearm', icon: '🔫' },
-  { type: 'longarm', label: 'Longarm', icon: '🎯' },
-  { type: 'gunbelt', label: 'Gunbelt', icon: '⚔️' },
   { type: 'pants', label: 'Pants', icon: '👖' },
   { type: 'boots', label: 'Boots', icon: '🥾' },
 ];
-const accessorySlots: { type: SlotType; label: string; icon: string }[] = [
-  { type: 'knife', label: 'Knife', icon: '🗡️' },
-  { type: 'rope', label: 'Rope', icon: '🪢' },
+const rightSlots: { type: SlotType; label: string; icon: string }[] = [
+  { type: 'sidearm', label: 'Pistol', icon: '🔫' },
+  { type: 'longarm', label: 'Rifle', icon: '🎯' },
+  { type: 'knife', label: 'Blade', icon: '🗡️' },
+  { type: 'gunbelt', label: 'Belt', icon: '⚔️' },
+  { type: 'rope', label: 'Lasso', icon: '🪢' },
   { type: 'canteen', label: 'Water', icon: '🫗' },
-  { type: 'tobacco', label: 'Tobacco', icon: '🚬' },
+  { type: 'tobacco', label: 'Smoke', icon: '🚬' },
+];
+const accessorySlots: { type: SlotType; label: string; icon: string }[] = [
   { type: 'special', label: 'Misc', icon: '💎' },
 ];
 
