@@ -3,10 +3,15 @@ import { GameProvider, useGame } from '@/context/GameContext';
 import { TopMenuBar } from '@/components/game/TopMenuBar';
 import { CharacterSection } from '@/components/game/CharacterSection';
 import { InventoryBag } from '@/components/game/InventoryBag';
+import { InventorySection } from '@/components/game/InventorySection';
 import { WorldMap } from '@/components/game/WorldMap';
 import { LoginPage } from '@/pages/Login';
 import { CharacterCreation } from '@/components/game/CharacterCreation';
 import { ShopSection } from '@/components/game/ShopSection';
+import { PropertySection } from '@/components/game/PropertySection';
+import { TimeSection } from '@/components/game/TimeSection';
+import { QuestsSection } from '@/components/game/QuestsSection';
+import { RestSection } from '@/components/game/RestSection';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 
@@ -16,7 +21,6 @@ function GameContent() {
 
   const handleDeleteCharacter = async () => {
     if (!user) return;
-    // Delete character and reset progress
     await supabase.from('player_characters').delete().eq('user_id', user.id);
     await supabase.from('player_progress').update({
       gender: 'male',
@@ -26,7 +30,6 @@ function GameContent() {
       completed_missions: [],
       item_locations: {},
     }).eq('user_id', user.id);
-    // Reload the page to restart
     window.location.reload();
   };
 
@@ -52,14 +55,18 @@ function GameContent() {
               </div>
             </>
           )}
+          {state.activeTab === 'INVENTORY' && <InventorySection />}
           {state.activeTab === 'MAPS' && <WorldMap />}
           {state.activeTab === 'SHOP' && <ShopSection />}
+          {state.activeTab === 'PROPERTY' && <PropertySection />}
+          {state.activeTab === 'TIME' && <TimeSection />}
+          {state.activeTab === 'QUESTS' && <QuestsSection />}
+          {state.activeTab === 'REST' && <RestSection />}
         </div>
       </div>
     </div>
   );
 }
-
 function AuthGate() {
   const { user, loading } = useAuth();
   const [hasCharacter, setHasCharacter] = useState<boolean | null>(null);

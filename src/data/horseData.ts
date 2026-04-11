@@ -152,6 +152,27 @@ export const shopConfigs: ShopConfig[] = [
   { id: 'shop-auction', name: 'Traveling Auction', type: 'auction', description: 'Rare event. Higher tier items but inflated prices.', tierChances: { basic: 20, advanced: 30, rare: 30, epic: 15, legendary: 5 }, stockCount: { min: 3, max: 6 }, priceMultiplier: 1.4, sellBackRate: 0.6 },
 ];
 
+export interface PropertyAddOn {
+  id: string;
+  name: string;
+  icon: string;
+  cost: number;
+  monthlyUpkeep: number;
+  benefits: string;
+}
+
+export const propertyAddOns: PropertyAddOn[] = [
+  { id: 'addon-stable', name: 'Personal Horse Stable (4 stalls)', icon: '🐴', cost: 1800, monthlyUpkeep: 25, benefits: 'Board your own horses, reduce upkeep 50%, auto-healing for injured mounts' },
+  { id: 'addon-corral', name: 'Large Corral (10 horses)', icon: '🤠', cost: 950, monthlyUpkeep: 12, benefits: 'Break/train horses, breed foals' },
+  { id: 'addon-barn', name: 'Barn & Hay Loft', icon: '🏚️', cost: 1200, monthlyUpkeep: 15, benefits: 'Store feed & tack, +20% horse stamina' },
+  { id: 'addon-blacksmith', name: 'Blacksmith Shed', icon: '⚒️', cost: 850, monthlyUpkeep: 10, benefits: 'Free basic repairs & shoeing' },
+  { id: 'addon-pastures', name: 'Fenced Pastures', icon: '🌾', cost: 650, monthlyUpkeep: 8, benefits: 'Better grass, faster horse leveling' },
+  { id: 'addon-well', name: 'Well & Windmill', icon: '💧', cost: 1100, monthlyUpkeep: 5, benefits: 'Free water, drought resistance' },
+  { id: 'addon-bunkhouse', name: 'Bunkhouse (4 workers)', icon: '🛖', cost: 2200, monthlyUpkeep: 40, benefits: 'Hire NPCs for income ($80/month)' },
+  { id: 'addon-smokehouse', name: 'Smokehouse & Root Cellar', icon: '🥩', cost: 420, monthlyUpkeep: 4, benefits: 'Preserve food, reduce travel to town' },
+  { id: 'addon-watchtower', name: 'Watchtower', icon: '🏰', cost: 750, monthlyUpkeep: 6, benefits: 'Early warning for raids/rustlers' },
+];
+
 export function rollRarity(chances: Record<Rarity, number>): Rarity {
   const roll = Math.random() * 100;
   let cumulative = 0;
