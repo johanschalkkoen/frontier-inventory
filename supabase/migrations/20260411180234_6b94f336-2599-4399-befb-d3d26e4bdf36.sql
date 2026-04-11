@@ -1,0 +1,1 @@
+ALTER TABLE public.player_progress ALTER COLUMN wallet_amount SET DEFAULT 0;
