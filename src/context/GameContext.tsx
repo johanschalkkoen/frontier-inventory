@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import { type GameItem, type SlotType, itemDatabase, STANDARD_STATS } from '@/data/gameData';
-import { getLevelFromXp, mapRegions, type Mission } from '@/data/mapData';
+import { getLevelFromXp, mapRegions, type Mission, type MissionEncounter } from '@/data/mapData';
 import { useAuth } from './AuthContext';
 import { loadProgress, saveProgress, type SaveData } from '@/lib/progressSync';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +9,17 @@ import { archetypes, TRAIT_STAT_MAP, type TraitCategory } from '@/data/archetype
 interface ItemLocation {
   area: 'bag-left' | 'bag-right' | 'equipped';
   slotType?: SlotType;
+}
+
+export interface ActiveQuest {
+  missionId: string;
+  startTime: number; // timestamp
+  endTime: number; // timestamp
+  encounters: MissionEncounter[];
+  currentEncounterIndex: number;
+  status: 'traveling' | 'encounter' | 'completed' | 'failed';
+  log: string[];
+  regionId: string;
 }
 
 interface GameState {
@@ -23,6 +34,7 @@ interface GameState {
   characterName: string;
   archetypeId: string;
   traitPoints: Record<string, number>;
+  activeQuest: ActiveQuest | null;
 }
 
 interface GameContextType {
@@ -39,12 +51,14 @@ interface GameContextType {
   getCoinTotal: () => number;
   getBagCount: (bag: 'bag-left' | 'bag-right') => number;
   getPlayerLevel: () => { level: number; currentXp: number; xpToNext: number };
+  startMission: (missionId: string) => boolean;
   completeMission: (missionId: string) => void;
   setSelectedRegion: (regionId: string | null) => void;
   isMissionCompleted: (missionId: string) => boolean;
   buyItem: (itemId: string, price: number) => boolean;
   sellItem: (itemId: string, sellPrice: number) => boolean;
   hasItem: (itemId: string) => boolean;
+  processEncounter: () => 'success' | 'fail' | 'none';
   loaded: boolean;
 }
 
@@ -69,7 +83,40 @@ function defaultState(): GameState {
     characterName: 'Outlaw',
     archetypeId: 'jace',
     traitPoints: {},
+    activeQuest: null,
   };
+}
+
+// Generate random encounters for a mission based on level
+function generateQuestEncounters(mission: Mission, playerLevel: number): MissionEncounter[] {
+  if (mission.encounters && mission.encounters.length > 0) {
+    // Scale difficulty to player level
+    return mission.encounters.map(e => ({
+      ...e,
+      difficulty: Math.max(1, e.difficulty + Math.floor((playerLevel - mission.levelRequired) * 0.3)),
+    }));
+  }
+  // Generate random encounters
+  const count = Math.min(1 + Math.floor(mission.levelRequired / 5), 5);
+  const types: MissionEncounter['type'][] = ['bandits', 'wildlife', 'weather', 'terrain'];
+  const names: Record<string, string[]> = {
+    bandits: ['Highway Bandits', 'Rustler Gang', 'Outlaw Posse'],
+    wildlife: ['Rattlesnake', 'Wolf Pack', 'Grizzly Bear'],
+    weather: ['Dust Storm', 'Heavy Rain', 'Scorching Heat'],
+    terrain: ['Rockslide', 'Quicksand', 'Fallen Tree'],
+  };
+  const result: MissionEncounter[] = [];
+  for (let i = 0; i < count; i++) {
+    const type = types[Math.floor(Math.random() * types.length)];
+    const nameList = names[type];
+    result.push({
+      type,
+      name: nameList[Math.floor(Math.random() * nameList.length)],
+      difficulty: mission.levelRequired + Math.floor(Math.random() * 3),
+      description: `A ${type} encounter on the trail!`,
+    });
+  }
+  return result;
 }
 
 export function GameProvider({ children }: { children: ReactNode }) {
@@ -225,7 +272,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [state.itemLocations, state.totalXp, state.archetypeId, state.traitPoints]);
 
   const getCoinTotal = useCallback(() => {
-    // Sum values of owned items only
     return itemDatabase.reduce((sum, item) => {
       const loc = state.itemLocations[item.id];
       if (loc) return sum + item.value;
@@ -241,17 +287,105 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return getLevelFromXp(state.totalXp);
   }, [state.totalXp]);
 
+  const startMission = useCallback((missionId: string): boolean => {
+    let started = false;
+    setState(s => {
+      // Can't start if already on a quest
+      if (s.activeQuest && s.activeQuest.status !== 'completed' && s.activeQuest.status !== 'failed') return s;
+      if (s.completedMissions.includes(missionId)) return s;
+
+      let mission: Mission | undefined;
+      let regionId = '';
+      for (const region of mapRegions) {
+        mission = region.missions.find(m => m.id === missionId);
+        if (mission) { regionId = region.id; break; }
+      }
+      if (!mission) return s;
+
+      const playerLevel = getLevelFromXp(s.totalXp).level;
+      if (playerLevel < mission.levelRequired) return s;
+
+      const encounters = generateQuestEncounters(mission, playerLevel);
+      const now = Date.now();
+      const durationMs = (mission.durationMinutes || 2) * 60 * 1000;
+
+      started = true;
+      return {
+        ...s,
+        activeQuest: {
+          missionId,
+          startTime: now,
+          endTime: now + durationMs,
+          encounters,
+          currentEncounterIndex: 0,
+          status: 'traveling',
+          log: [`📋 Quest started: ${mission.name}`, `⏱ Estimated time: ${mission.durationMinutes} minutes`],
+          regionId,
+        },
+      };
+    });
+    return started;
+  }, []);
+
+  const processEncounter = useCallback((): 'success' | 'fail' | 'none' => {
+    let result: 'success' | 'fail' | 'none' = 'none';
+    setState(s => {
+      if (!s.activeQuest || s.activeQuest.status !== 'encounter') return s;
+      const quest = { ...s.activeQuest };
+      const encounter = quest.encounters[quest.currentEncounterIndex];
+      if (!encounter) return s;
+
+      const stats = (() => {
+        const playerLevel = getLevelFromXp(s.totalXp);
+        const current = { ...STANDARD_STATS };
+        for (const key of Object.keys(current)) current[key] += (playerLevel.level - 1) * 2;
+        itemDatabase.forEach(item => {
+          const loc = s.itemLocations[item.id];
+          if (loc?.area === 'equipped') {
+            for (const [sk, v] of Object.entries(item.stats)) {
+              if (sk in current) current[sk] += v as number;
+            }
+          }
+        });
+        return current;
+      })();
+
+      // Combat calculation: player power vs encounter difficulty
+      const playerPower = (stats.damage || 10) + (stats.defense || 0) + (stats.speed || 0) + (stats.luck || 0);
+      const encounterPower = encounter.difficulty * 15 + Math.random() * 20;
+      const success = playerPower + Math.random() * 30 > encounterPower;
+
+      if (success) {
+        quest.log = [...quest.log, `⚔️ ${encounter.name}: VICTORY! You overcame the ${encounter.type}.`];
+        quest.currentEncounterIndex++;
+        if (quest.currentEncounterIndex >= quest.encounters.length) {
+          quest.status = 'traveling';
+          quest.log = [...quest.log, '🏇 Back on the trail...'];
+        } else {
+          quest.status = 'traveling';
+        }
+        result = 'success';
+      } else {
+        quest.status = 'failed';
+        quest.log = [...quest.log, `💀 ${encounter.name}: DEFEATED! You were injured and had to retreat.`];
+        result = 'fail';
+      }
+
+      return { ...s, activeQuest: quest };
+    });
+    return result;
+  }, []);
+
   const buyItem = useCallback((itemId: string, price: number): boolean => {
     let success = false;
     setState(s => {
       if (s.walletAmount < price) return s;
-      if (s.itemLocations[itemId]) return s; // already owned
-      // Check bag space
+      if (s.itemLocations[itemId]) return s;
       const leftCount = Object.values(s.itemLocations).filter(l => l.area === 'bag-left').length;
       const rightCount = Object.values(s.itemLocations).filter(l => l.area === 'bag-right').length;
       const targetBag: 'bag-left' | 'bag-right' = leftCount <= rightCount ? 'bag-left' : 'bag-right';
       const targetCount = targetBag === 'bag-left' ? leftCount : rightCount;
-      if (targetCount >= 20) return s; // bags full
+      if (targetCount >= 20) return s;
       success = true;
       return {
         ...s,
@@ -265,7 +399,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const sellItem = useCallback((itemId: string, sellPrice: number): boolean => {
     let success = false;
     setState(s => {
-      if (!s.itemLocations[itemId]) return s; // don't own it
+      if (!s.itemLocations[itemId]) return s;
       const newLocs = { ...s.itemLocations };
       delete newLocs[itemId];
       success = true;
@@ -296,6 +430,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         completedMissions: [...s.completedMissions, missionId],
         totalXp: s.totalXp + mission.xpReward,
         walletAmount: s.walletAmount + mission.coinReward,
+        activeQuest: null,
       };
     });
   }, []);
@@ -312,8 +447,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     <GameContext.Provider value={{
       state, setGender, setSelectedCharacter, setActiveTab, equipItem, unequipItem, moveItem,
       getItemsInLocation, getEquippedItem, getCalculatedStats, getCoinTotal, getBagCount,
-      getPlayerLevel, completeMission, setSelectedRegion, isMissionCompleted,
-      buyItem, sellItem, hasItem, loaded,
+      getPlayerLevel, startMission, completeMission, setSelectedRegion, isMissionCompleted,
+      buyItem, sellItem, hasItem, processEncounter, loaded,
     }}>
       {children}
     </GameContext.Provider>

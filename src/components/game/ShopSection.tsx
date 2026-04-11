@@ -19,18 +19,26 @@ const MAIN_TABS = ['Buy', 'Sell'] as const;
 type MainTab = typeof MAIN_TABS[number];
 
 const BUY_CATEGORIES: { key: ItemCategory | 'horses' | 'tack' | 'properties'; label: string; icon: string }[] = [
-  { key: 'clothing', label: 'Clothing', icon: '👕' },
-  { key: 'weapon', label: 'Weapons', icon: '🔫' },
+  { key: 'clothing', label: 'Apparel', icon: '🤠' },
+  { key: 'weapon', label: 'Weapons', icon: '⚔️' },
   { key: 'ammo', label: 'Ammo', icon: '🎯' },
-  { key: 'food', label: 'Food', icon: '🥩' },
+  { key: 'food', label: 'Provisions', icon: '🥩' },
   { key: 'drink', label: 'Drinks', icon: '🥃' },
-  { key: 'edc', label: 'Gear', icon: '🎒' },
-  { key: 'medicine', label: 'Medicine', icon: '💊' },
-  { key: 'luxury', label: 'Luxury', icon: '💎' },
+  { key: 'edc', label: 'Trail Gear', icon: '🧰' },
+  { key: 'medicine', label: 'Medicine', icon: '💉' },
+  { key: 'luxury', label: 'Luxury', icon: '🃏' },
   { key: 'valuable', label: 'Valuables', icon: '💰' },
-  { key: 'horses', label: 'Horses', icon: '🐎' },
-  { key: 'tack', label: 'Tack', icon: '🪢' },
-  { key: 'properties', label: 'Land', icon: '🏠' },
+  { key: 'horses', label: 'Horses', icon: '🐴' },
+  { key: 'tack', label: 'Tack', icon: '🪶' },
+  { key: 'properties', label: 'Land', icon: '🏚️' },
+];
+
+const SHOP_FILTERS = [
+  { key: 'all', label: 'All Shops', icon: '🏪' },
+  { key: 'shop-general', label: 'General Store', icon: '🏪' },
+  { key: 'shop-livery', label: 'Livery Stable', icon: '🐴' },
+  { key: 'shop-saddle', label: 'Saddle Shop', icon: '🪶' },
+  { key: 'shop-auction', label: 'Auction House', icon: '🔔' },
 ];
 
 export function ShopSection() {
@@ -38,10 +46,10 @@ export function ShopSection() {
   const { level } = getPlayerLevel();
   const [mainTab, setMainTab] = useState<MainTab>('Buy');
   const [buyCategory, setBuyCategory] = useState<string>('clothing');
-  const [selectedShop, setSelectedShop] = useState(shopConfigs[0].id);
+  const [selectedShop, setSelectedShop] = useState('shop-general');
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
 
-  const shop = shopConfigs.find(s => s.id === selectedShop)!;
+  const shop = shopConfigs.find(s => s.id === selectedShop) || shopConfigs[0];
 
   const filteredItems = useMemo(() => {
     if (mainTab === 'Sell') {
@@ -57,8 +65,8 @@ export function ShopSection() {
     const price = Math.round(item.value * shop.priceMultiplier);
     const success = buyItem(item.id, price);
     if (success) toast.success(`Bought ${item.name} for $${price}!`);
-    else if (state.walletAmount < price) toast.error('Not enough money!');
-    else toast.error('Already owned or bags full!');
+    else if (state.walletAmount < price) toast.error('Not enough funds, partner!');
+    else toast.error('Already owned or saddlebags full!');
   };
 
   const handleSell = (item: GameItem) => {
@@ -70,46 +78,46 @@ export function ShopSection() {
 
   return (
     <div className="flex-1 flex gap-4">
-      <div className="w-[300px] flex-shrink-0">
+      <div className="w-[320px] flex-shrink-0">
         <h2 className="font-display text-xl font-bold text-accent mb-2 drop-shadow-[2px_2px_0px_rgba(0,0,0,0.8)]">
-          GENERAL STORE
+          🏪 {shop.name.toUpperCase()}
         </h2>
 
-        {/* Shop type */}
-        <div className="mb-2">
-          <div className="flex flex-wrap gap-1">
-            {shopConfigs.map(s => (
-              <button key={s.id} onClick={() => setSelectedShop(s.id)}
-                className={`px-2 py-1 text-[8px] font-bold border transition-all ${
-                  s.id === selectedShop ? 'border-accent bg-game-slot text-accent' : 'border-game-slot-border bg-game-slot/30 text-muted-foreground hover:text-foreground'
-                }`}>
-                {s.name.split(' ')[0]}
-              </button>
-            ))}
-          </div>
+        {/* Shop selector */}
+        <div className="flex flex-wrap gap-1 mb-2">
+          {SHOP_FILTERS.filter(f => f.key !== 'all').map(f => (
+            <button key={f.key} onClick={() => { setSelectedShop(f.key); setSelectedItem(null); }}
+              className={`px-2 py-1.5 text-[9px] font-bold border transition-all ${
+                f.key === selectedShop
+                  ? 'border-accent bg-accent/20 text-accent'
+                  : 'border-game-slot-border bg-game-slot/30 text-muted-foreground hover:text-foreground hover:border-primary/50'
+              }`}>
+              {f.icon} {f.label}
+            </button>
+          ))}
         </div>
 
         {/* Buy/Sell toggle */}
         <div className="flex gap-1 mb-2">
           {MAIN_TABS.map(tab => (
             <button key={tab} onClick={() => { setMainTab(tab); setSelectedItem(null); }}
-              className={`flex-1 py-1.5 text-[10px] font-bold border transition-all ${
+              className={`flex-1 py-2 text-xs font-bold border transition-all ${
                 tab === mainTab
                   ? tab === 'Sell' ? 'bg-destructive text-destructive-foreground border-destructive' : 'bg-primary text-primary-foreground border-accent'
                   : 'bg-game-slot-border text-foreground border-game-slot hover:bg-secondary'
               }`}>
-              {tab === 'Sell' ? '💰 SELL' : '🛒 BUY'}
+              {tab === 'Sell' ? '💰 SELL ITEMS' : '🛒 BUY GOODS'}
             </button>
           ))}
         </div>
 
-        {/* Category sub-tabs (buy only) */}
+        {/* Category tabs */}
         {mainTab === 'Buy' && (
           <div className="flex flex-wrap gap-1 mb-2">
             {BUY_CATEGORIES.map(cat => (
               <button key={cat.key} onClick={() => { setBuyCategory(cat.key); setSelectedItem(null); }}
-                className={`px-1.5 py-1 text-[8px] font-bold border transition-all ${
-                  cat.key === buyCategory ? 'border-accent bg-game-slot text-accent' : 'border-game-slot-border/50 bg-game-slot/20 text-muted-foreground hover:text-foreground'
+                className={`px-2 py-1 text-[9px] font-bold border transition-all ${
+                  cat.key === buyCategory ? 'border-accent bg-accent/20 text-accent' : 'border-game-slot-border/50 bg-game-slot/20 text-muted-foreground hover:text-foreground'
                 }`}>
                 {cat.icon} {cat.label}
               </button>
@@ -153,15 +161,15 @@ export function ShopSection() {
         </div>
 
         <div className="mt-2 flex justify-between text-xs text-accent font-bold bg-game-slot p-2 border border-game-slot-border">
-          <span>WALLET:</span>
-          <span>${state.walletAmount.toFixed(2)}</span>
+          <span>💰 WALLET:</span>
+          <span>${state.walletAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
         </div>
         <div className="mt-1 text-[8px] text-muted-foreground">
-          Sell: {Math.round(shop.sellBackRate * 100)}% · Markup: ×{shop.priceMultiplier}
+          Sell rate: {Math.round(shop.sellBackRate * 100)}% · Markup: ×{shop.priceMultiplier}
         </div>
       </div>
 
-      {/* Right: Detail panel */}
+      {/* Detail panel */}
       <div className="flex-1 bg-game-slot border border-game-slot-border p-4 min-h-[400px]">
         {selectedItem ? (
           mainTab === 'Sell' ? (
@@ -177,7 +185,9 @@ export function ShopSection() {
           )
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-            <p className="text-sm">Select an item to view details</p>
+            <span className="text-4xl mb-3">🏪</span>
+            <p className="text-sm font-display">Select an item to inspect</p>
+            <p className="text-[10px] mt-1">Browse the shelves, partner</p>
           </div>
         )}
       </div>
@@ -186,7 +196,7 @@ export function ShopSection() {
 }
 
 function EmptyList() {
-  return <div className="text-center text-muted-foreground text-[10px] py-8">No items available at your level</div>;
+  return <div className="text-center text-muted-foreground text-[10px] py-8">Nothing at your level yet, partner</div>;
 }
 
 function ShopListItem({ name, rarity, price, selected, onClick, img, owned, isSell }: {
@@ -194,11 +204,11 @@ function ShopListItem({ name, rarity, price, selected, onClick, img, owned, isSe
 }) {
   return (
     <button onClick={onClick}
-      className={`w-full flex items-center gap-2 p-1.5 text-left transition-all border-b border-game-slot-border/30 ${
-        selected ? 'bg-game-slot-border' : 'hover:bg-game-slot-border/50'
+      className={`w-full flex items-center gap-2 p-2 text-left transition-all border-b border-game-slot-border/30 ${
+        selected ? 'bg-accent/10 border-l-2 border-l-accent' : 'hover:bg-game-slot-border/50'
       } ${owned && !isSell ? 'opacity-40' : ''}`}>
-      <div className={`w-8 h-8 border overflow-hidden flex-shrink-0 ${RARITY_COLORS[rarity]}`}>
-        <img src={img} alt={name} className="w-full h-full object-cover" loading="lazy" width={32} height={32} />
+      <div className={`w-9 h-9 border overflow-hidden flex-shrink-0 ${RARITY_COLORS[rarity]}`}>
+        <img src={img} alt={name} className="w-full h-full object-cover" loading="lazy" width={36} height={36} />
       </div>
       <div className="flex-1 min-w-0">
         <span className={`text-[10px] font-bold block truncate ${RARITY_COLORS[rarity].split(' ')[0]}`}>
@@ -220,9 +230,9 @@ function ItemDetail({ item, mode, priceMultiplier = 1, sellRate = 0.5, onAction,
   const canAfford = wallet >= price || price === 0;
 
   return (
-    <div>
-      <div className="flex gap-4 mb-3">
-        <div className={`w-20 h-20 border-2 overflow-hidden rounded ${RARITY_COLORS[item.rarity]}`}>
+    <div className="animate-fade-in">
+      <div className="flex gap-4 mb-4">
+        <div className={`w-20 h-20 border-2 overflow-hidden ${RARITY_COLORS[item.rarity]}`}>
           <img src={item.img} alt={item.name} className="w-full h-full object-cover" width={80} height={80} />
         </div>
         <div>
@@ -230,8 +240,8 @@ function ItemDetail({ item, mode, priceMultiplier = 1, sellRate = 0.5, onAction,
           <p className="text-muted-foreground text-[10px]">
             {item.type.toUpperCase()} · {item.category.toUpperCase()} · Lvl {item.levelRequired}+
           </p>
-          <div className="flex gap-2 items-center">
-            <span className={`text-[9px] font-bold uppercase ${RARITY_COLORS[item.rarity].split(' ')[0]}`}>{item.rarity}</span>
+          <div className="flex gap-2 items-center mt-1">
+            <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 border ${RARITY_COLORS[item.rarity]}`}>{item.rarity}</span>
             {item.consumable && <span className="text-[8px] bg-secondary px-1 py-0.5 text-muted-foreground">CONSUMABLE</span>}
             {item.stackable && <span className="text-[8px] bg-secondary px-1 py-0.5 text-muted-foreground">STACKABLE</span>}
           </div>
@@ -239,11 +249,11 @@ function ItemDetail({ item, mode, priceMultiplier = 1, sellRate = 0.5, onAction,
       </div>
 
       {Object.keys(item.stats).length > 0 && (
-        <div className="mb-3">
-          <span className="text-[9px] text-primary font-bold">EFFECTS:</span>
-          <div className="grid grid-cols-3 gap-2 mt-1">
+        <div className="mb-4">
+          <span className="text-[9px] text-primary font-bold block mb-1">EFFECTS:</span>
+          <div className="grid grid-cols-3 gap-2">
             {Object.entries(item.stats).map(([k, v]) => v ? (
-              <div key={k} className="bg-game-slot-border/50 p-1.5 text-center rounded">
+              <div key={k} className="bg-game-slot-border/50 p-2 text-center">
                 <span className="text-[8px] text-muted-foreground block">{k.toUpperCase()}</span>
                 <span className={`font-bold text-sm ${(v as number) > 0 ? 'text-rarity-advanced' : 'text-destructive'}`}>
                   {(v as number) > 0 ? '+' : ''}{v}
@@ -257,19 +267,19 @@ function ItemDetail({ item, mode, priceMultiplier = 1, sellRate = 0.5, onAction,
       <div className="flex items-center justify-between border-t border-game-slot-border pt-3">
         <div>
           {mode === 'sell' && <span className="text-muted-foreground text-[9px] block">SELL VALUE</span>}
-          <span className="text-accent font-bold text-lg">${price}</span>
+          <span className="text-accent font-bold text-xl">${price}</span>
         </div>
         {mode === 'sell' ? (
           <button onClick={() => onAction(item)}
-            className="px-6 py-2 bg-destructive text-destructive-foreground font-display font-bold text-sm hover:bg-destructive/80 transition-colors">
-            SELL
+            className="px-6 py-2.5 bg-destructive text-destructive-foreground font-display font-bold text-sm hover:bg-destructive/80 transition-all active:scale-95">
+            💰 SELL
           </button>
         ) : owned ? (
-          <span className="text-rarity-advanced font-bold text-sm">✓ OWNED</span>
+          <span className="text-rarity-advanced font-bold text-sm border border-rarity-advanced px-3 py-1.5">✓ OWNED</span>
         ) : (
           <button onClick={() => onAction(item)} disabled={!canAfford}
-            className="px-6 py-2 bg-accent text-accent-foreground font-display font-bold text-sm hover:bg-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-            {!canAfford ? 'CANT AFFORD' : price === 0 ? 'CLAIM' : 'BUY'}
+            className="px-6 py-2.5 bg-accent text-accent-foreground font-display font-bold text-sm hover:bg-primary transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed">
+            {!canAfford ? '💸 CANT AFFORD' : price === 0 ? '🤝 CLAIM' : '🛒 BUY'}
           </button>
         )}
       </div>
@@ -283,20 +293,20 @@ function HorseDetail({ itemId, priceMultiplier, wallet }: { itemId: string; pric
   const price = Math.round(horse.value * priceMultiplier);
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex gap-4 mb-3">
-        <div className={`w-24 h-24 border-2 overflow-hidden rounded ${RARITY_COLORS[horse.rarity]}`}>
+        <div className={`w-24 h-24 border-2 overflow-hidden ${RARITY_COLORS[horse.rarity]}`}>
           <img src={horseImg} alt={horse.name} className="w-full h-full object-cover" width={96} height={96} />
         </div>
         <div>
           <h3 className={`font-display font-bold text-lg ${RARITY_COLORS[horse.rarity].split(' ')[0]}`}>{horse.name}</h3>
-          <p className="text-muted-foreground text-xs">{horse.breed} · Lvl {horse.level} · {horse.gender === 'male' ? '♂' : '♀'}</p>
-          <span className={`text-[9px] font-bold uppercase ${RARITY_COLORS[horse.rarity].split(' ')[0]}`}>{horse.rarity}</span>
+          <p className="text-muted-foreground text-xs">{horse.breed} · Lvl {horse.level} · {horse.gender === 'male' ? '♂ Stallion' : '♀ Mare'}</p>
+          <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 border ${RARITY_COLORS[horse.rarity]}`}>{horse.rarity}</span>
         </div>
       </div>
       <div className="grid grid-cols-4 gap-2 mb-3">
         {Object.entries(horse.stats).map(([k, v]) => (
-          <div key={k} className="bg-game-slot-border/50 p-2 text-center rounded">
+          <div key={k} className="bg-game-slot-border/50 p-2 text-center">
             <span className="text-[8px] text-muted-foreground block">{k.toUpperCase()}</span>
             <span className="text-accent font-bold text-sm">{v}</span>
           </div>
@@ -305,21 +315,21 @@ function HorseDetail({ itemId, priceMultiplier, wallet }: { itemId: string; pric
       <div className="mb-2">
         <span className="text-[9px] text-primary font-bold">TRAITS:</span>
         <div className="flex gap-1 mt-0.5 flex-wrap">
-          {horse.traits.map(t => <span key={t} className="text-[9px] bg-secondary px-1.5 py-0.5 text-foreground rounded">{t}</span>)}
+          {horse.traits.map(t => <span key={t} className="text-[9px] bg-secondary px-1.5 py-0.5 text-foreground">{t}</span>)}
         </div>
       </div>
       <div className="mb-3">
         <span className="text-[9px] text-primary font-bold">SKILLS:</span>
         <div className="flex gap-1 mt-0.5 flex-wrap">
-          {horse.skills.map(s => <span key={s} className="text-[9px] bg-game-slot-border px-1.5 py-0.5 text-foreground rounded">{s}</span>)}
+          {horse.skills.map(s => <span key={s} className="text-[9px] bg-game-slot-border px-1.5 py-0.5 text-foreground">{s}</span>)}
         </div>
       </div>
       <div className="flex items-center justify-between border-t border-game-slot-border pt-3">
-        <span className="text-accent font-bold text-lg">{price > 0 ? `$${price}` : 'FREE'}</span>
+        <span className="text-accent font-bold text-xl">{price > 0 ? `$${price}` : 'FREE'}</span>
         <button disabled={wallet < price && price > 0}
-          className="px-6 py-2 bg-accent text-accent-foreground font-display font-bold text-sm hover:bg-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          onClick={() => toast.info('Horse stable coming soon!')}>
-          {wallet < price && price > 0 ? 'CANT AFFORD' : price === 0 ? 'CLAIM' : 'BUY'}
+          className="px-6 py-2.5 bg-accent text-accent-foreground font-display font-bold text-sm hover:bg-primary transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+          onClick={() => toast.info('Horse stable system coming soon!')}>
+          {wallet < price && price > 0 ? '💸 CANT AFFORD' : price === 0 ? '🤝 CLAIM' : '🐴 BUY'}
         </button>
       </div>
     </div>
@@ -332,15 +342,15 @@ function TackDetail({ itemId, priceMultiplier, wallet }: { itemId: string; price
   const price = Math.round(tack.value * priceMultiplier);
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex gap-4 mb-3">
-        <div className={`w-20 h-20 border-2 overflow-hidden rounded ${RARITY_COLORS[tack.rarity]}`}>
+        <div className={`w-20 h-20 border-2 overflow-hidden ${RARITY_COLORS[tack.rarity]}`}>
           <img src={tackImg} alt={tack.name} className="w-full h-full object-cover" width={80} height={80} />
         </div>
         <div>
           <h3 className={`font-display font-bold text-base ${RARITY_COLORS[tack.rarity].split(' ')[0]}`}>{tack.name}</h3>
           <p className="text-muted-foreground text-[10px]">{tack.category.toUpperCase()}</p>
-          <span className={`text-[9px] font-bold uppercase ${RARITY_COLORS[tack.rarity].split(' ')[0]}`}>{tack.rarity}</span>
+          <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 border ${RARITY_COLORS[tack.rarity]}`}>{tack.rarity}</span>
         </div>
       </div>
       <p className="text-foreground text-xs mb-3">{tack.description}</p>
@@ -353,11 +363,11 @@ function TackDetail({ itemId, priceMultiplier, wallet }: { itemId: string; price
         </div>
       )}
       <div className="flex items-center justify-between border-t border-game-slot-border pt-3">
-        <span className="text-accent font-bold text-lg">${price}</span>
+        <span className="text-accent font-bold text-xl">${price}</span>
         <button disabled={wallet < price}
-          className="px-6 py-2 bg-accent text-accent-foreground font-display font-bold text-sm hover:bg-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          onClick={() => toast.info('Horse tack system coming soon!')}>
-          {wallet < price ? 'CANT AFFORD' : 'BUY'}
+          className="px-6 py-2.5 bg-accent text-accent-foreground font-display font-bold text-sm hover:bg-primary transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+          onClick={() => toast.info('Tack system coming soon!')}>
+          {wallet < price ? '💸 CANT AFFORD' : '🪶 BUY'}
         </button>
       </div>
     </div>
@@ -370,9 +380,9 @@ function PropertyDetail({ itemId, playerLevel, wallet }: { itemId: string; playe
   const canBuy = wallet >= prop.cost && playerLevel >= prop.levelRequired;
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <div className="flex gap-4 mb-3">
-        <div className="w-24 h-24 border-2 border-accent overflow-hidden rounded">
+        <div className="w-24 h-24 border-2 border-accent overflow-hidden">
           <img src={cabinImg} alt={prop.name} className="w-full h-full object-cover" width={96} height={96} />
         </div>
         <div>
@@ -387,15 +397,15 @@ function PropertyDetail({ itemId, playerLevel, wallet }: { itemId: string; playe
       <div className="mb-3">
         <span className="text-[9px] text-primary font-bold">PERKS:</span>
         <div className="flex gap-1 mt-0.5 flex-wrap">
-          {prop.perks.map(p => <span key={p} className="text-[9px] bg-secondary px-1.5 py-0.5 text-foreground rounded">{p}</span>)}
+          {prop.perks.map(p => <span key={p} className="text-[9px] bg-secondary px-1.5 py-0.5 text-foreground">{p}</span>)}
         </div>
       </div>
       <div className="flex items-center justify-between border-t border-game-slot-border pt-3">
-        <span className="text-accent font-bold text-lg">${prop.cost}</span>
+        <span className="text-accent font-bold text-xl">${prop.cost}</span>
         <button disabled={!canBuy}
-          className="px-6 py-2 bg-accent text-accent-foreground font-display font-bold text-sm hover:bg-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="px-6 py-2.5 bg-accent text-accent-foreground font-display font-bold text-sm hover:bg-primary transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
           onClick={() => canBuy && toast.info('Property system coming soon!')}>
-          {playerLevel < prop.levelRequired ? `NEED LVL ${prop.levelRequired}` : !canBuy ? 'CANT AFFORD' : 'BUY'}
+          {playerLevel < prop.levelRequired ? `🔒 NEED LVL ${prop.levelRequired}` : !canBuy ? '💸 CANT AFFORD' : '🏚️ BUY'}
         </button>
       </div>
     </div>
