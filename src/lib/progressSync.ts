@@ -30,6 +30,10 @@ export async function loadProgress(userId: string): Promise<SaveData | null> {
     totalXp: data.total_xp,
     walletAmount: Number(data.wallet_amount),
     completedMissions: data.completed_missions || [],
+    itemLocations: (data.item_locations as unknown as Record<string, ItemLocation>) || {},
+  };
+}
+    completedMissions: data.completed_missions || [],
     itemLocations: (data.item_locations as Record<string, ItemLocation>) || {},
   };
 }
