@@ -24,7 +24,7 @@ import vestImg from '@/assets/items/vest.jpg';
 import dynamiteImg from '@/assets/items/dynamite.jpg';
 
 // Equipment slots (wearable)
-export type SlotType = 'hat' | 'bandana' | 'shirt' | 'outerwear' | 'gloves' | 'sidearm' | 'longarm' | 'gunbelt' | 'pants' | 'boots' | 'knife' | 'rope' | 'canteen' | 'tobacco' | 'special';
+export type SlotType = 'hat' | 'bandana' | 'shirt' | 'outerwear' | 'gloves' | 'sidearm' | 'longarm' | 'gunbelt' | 'pants' | 'boots' | 'knife' | 'rope' | 'canteen' | 'tobacco' | 'special' | 'shovel';
 export type Rarity = 'basic' | 'advanced' | 'rare' | 'epic' | 'legendary';
 
 // Shop categories for organizing items
