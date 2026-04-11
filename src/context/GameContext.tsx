@@ -84,7 +84,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded] = useState(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
-  // Load progress from DB when user logs in
+  // Load progress + character from DB when user logs in
   useEffect(() => {
     if (!user) {
       setState(defaultState());
@@ -92,19 +92,46 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    loadProgress(user.id).then(data => {
-      if (data) {
-        const locs = Object.keys(data.itemLocations).length > 0 ? data.itemLocations : defaultLocations();
-        setState(s => ({
-          ...s,
-          gender: data.gender as 'male' | 'female',
-          selectedCharacterId: data.selectedCharacterId,
-          totalXp: data.totalXp,
-          walletAmount: data.walletAmount,
-          completedMissions: data.completedMissions,
-          itemLocations: locs as Record<string, ItemLocation>,
-        }));
-      }
+    Promise.all([
+      loadProgress(user.id),
+      supabase
+        .from('player_characters')
+        .select('character_name, archetype_id, portrait_id, trait_points')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .limit(1)
+        .single(),
+    ]).then(([progressData, charResult]) => {
+      setState(s => {
+        let next = { ...s };
+
+        if (progressData) {
+          const locs = Object.keys(progressData.itemLocations).length > 0 ? progressData.itemLocations : defaultLocations();
+          next = {
+            ...next,
+            gender: progressData.gender as 'male' | 'female',
+            selectedCharacterId: progressData.selectedCharacterId,
+            totalXp: progressData.totalXp,
+            walletAmount: progressData.walletAmount,
+            completedMissions: progressData.completedMissions,
+            itemLocations: locs as Record<string, ItemLocation>,
+          };
+        }
+
+        if (charResult.data) {
+          const arch = archetypes.find(a => a.id === charResult.data.archetype_id);
+          next = {
+            ...next,
+            characterName: charResult.data.character_name,
+            archetypeId: charResult.data.archetype_id,
+            traitPoints: (charResult.data.trait_points as Record<string, number>) || {},
+            selectedCharacterId: charResult.data.portrait_id || next.selectedCharacterId,
+            gender: arch?.gender || next.gender,
+          };
+        }
+
+        return next;
+      });
       setLoaded(true);
     });
   }, [user]);
