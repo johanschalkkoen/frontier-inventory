@@ -384,8 +384,8 @@ function ActiveQuestPanel() {
       <div className="border border-game-slot-border bg-game-slot/40 p-2 mb-2">
         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
           <span className="text-[8px] text-muted-foreground font-bold">EQUIPPED:</span>
-          {equippedSidearm && <span className="text-[9px] text-accent">🔫 {equippedSidearm.name}</span>}
-          {equippedLongarm && <span className="text-[9px] text-accent">🎯 {equippedLongarm.name}</span>}
+          {equippedSidearm && <span className="text-[9px] text-accent">⌁ {equippedSidearm.name}</span>}
+          {equippedLongarm && <span className="text-[9px] text-accent">╪ {equippedLongarm.name}</span>}
           {!equippedSidearm && !equippedLongarm && (
             isBrawl ? <span className="text-[9px] text-accent">👊 Bare fists</span>
               : <span className="text-[9px] text-destructive">⚠ No weapon!</span>
