@@ -4,7 +4,7 @@ import { itemDatabase } from '@/data/gameData';
 import { horseDatabase, tackDatabase, propertyDatabase, propertyAddOns } from '@/data/horseData';
 
 export function InventorySection() {
-  const { state, hasItem } = useGame();
+  const { state } = useGame();
 
   const ownedItems = itemDatabase.filter(i => state.itemLocations[i.id]);
   const equippedCount = ownedItems.filter(i => state.itemLocations[i.id]?.area === 'equipped').length;
@@ -16,85 +16,72 @@ export function InventorySection() {
         📦 INVENTORY
       </h2>
 
+      {/* Summary stats */}
       <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="bg-game-slot/50 border border-game-slot-border p-2 text-center">
-          <span className="text-[8px] text-muted-foreground block">TOTAL ITEMS</span>
-          <span className="text-accent font-bold text-lg">{ownedItems.length}</span>
-        </div>
-        <div className="bg-game-slot/50 border border-game-slot-border p-2 text-center">
-          <span className="text-[8px] text-muted-foreground block">EQUIPPED</span>
-          <span className="text-accent font-bold text-lg">{equippedCount}</span>
-        </div>
-        <div className="bg-game-slot/50 border border-game-slot-border p-2 text-center">
-          <span className="text-[8px] text-muted-foreground block">TOTAL VALUE</span>
-          <span className="text-accent font-bold text-lg">${totalValue}</span>
-        </div>
+        {[
+          { label: 'TOTAL ITEMS', value: ownedItems.length, color: 'text-accent' },
+          { label: 'EQUIPPED', value: equippedCount, color: 'text-accent' },
+          { label: 'TOTAL VALUE', value: `$${totalValue}`, color: 'text-accent' },
+        ].map(s => (
+          <div key={s.label} className="bg-game-slot/50 border-2 border-game-slot-border p-2 text-center"
+            style={{ borderImage: 'linear-gradient(135deg, hsl(var(--primary)/0.3), hsl(var(--accent)/0.2)) 1' }}>
+            <span className="text-[8px] text-muted-foreground block">{s.label}</span>
+            <span className={`${s.color} font-bold text-lg`}>{s.value}</span>
+          </div>
+        ))}
       </div>
 
+      {/* Saddlebags */}
       <div className="flex gap-4 mb-4">
         <InventoryBag bagId="bag-left" title="Left Saddlebag" />
         <InventoryBag bagId="bag-right" title="Right Saddlebag" />
       </div>
 
-      {/* All Assets Overview */}
+      {/* All Assets */}
       <div className="space-y-3">
-        {/* Properties */}
-        <div className="bg-game-slot/30 border border-game-slot-border p-2">
-          <h3 className="font-display text-[10px] font-bold text-primary mb-2">🏚️ PROPERTIES & LAND</h3>
-          <div className="space-y-1 max-h-[150px] overflow-y-auto">
-            {propertyDatabase.map(p => (
-              <div key={p.id} className="flex items-center justify-between text-[9px] px-2 py-1 bg-game-slot/40 border border-game-slot-border/20">
-                <div>
-                  <span className="text-foreground font-bold">{p.name}</span>
-                  <span className="text-muted-foreground ml-1">({p.type})</span>
-                </div>
-                <span className="text-muted-foreground">Not Owned · ${p.cost}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <AssetSection title="🏚️ PROPERTIES & LAND" items={propertyDatabase.map(p => ({
+          name: p.name, detail: p.type, cost: p.cost, owned: false,
+        }))} />
+        <AssetSection title="🔧 RANCH ADD-ONS" items={propertyAddOns.map(a => ({
+          name: `${a.icon} ${a.name}`, detail: a.benefits.slice(0, 40) + '...', cost: a.cost, owned: false,
+        }))} />
+        <AssetSection title="🐴 HORSES" items={horseDatabase.map(h => ({
+          name: h.name, detail: `${h.breed} · ${h.rarity}`, cost: h.value, owned: h.value === 0,
+        }))} />
+        <AssetSection title="🪶 TACK & GEAR" items={tackDatabase.map(t => ({
+          name: t.name, detail: t.category, cost: t.value, owned: false,
+        }))} />
+      </div>
+    </div>
+  );
+}
 
-        {/* Ranch Add-Ons */}
-        <div className="bg-game-slot/30 border border-game-slot-border p-2">
-          <h3 className="font-display text-[10px] font-bold text-primary mb-2">🔧 RANCH ADD-ONS</h3>
-          <div className="space-y-1 max-h-[120px] overflow-y-auto">
-            {propertyAddOns.map(a => (
-              <div key={a.id} className="flex items-center justify-between text-[9px] px-2 py-1 bg-game-slot/40 border border-game-slot-border/20">
-                <span className="text-foreground font-bold">{a.icon} {a.name}</span>
-                <span className="text-muted-foreground">Not Built · ${a.cost}</span>
-              </div>
-            ))}
+function AssetSection({ title, items }: {
+  title: string;
+  items: { name: string; detail: string; cost: number; owned: boolean }[];
+}) {
+  return (
+    <div className="bg-game-slot/30 border-2 border-game-slot-border p-2"
+      style={{ borderImage: 'linear-gradient(135deg, hsl(var(--primary)/0.2), hsl(var(--accent)/0.1)) 1' }}>
+      <h3 className="font-display text-[10px] font-bold text-primary mb-2">{title}</h3>
+      <div className="space-y-1 max-h-[140px] overflow-y-auto">
+        {items.map((item, i) => (
+          <div key={i} className={`flex items-center justify-between text-[9px] px-2 py-1.5 border transition-all
+            ${item.owned
+              ? 'bg-rarity-advanced/10 border-rarity-advanced/30'
+              : 'bg-game-slot/40 border-game-slot-border/20 hover:bg-game-slot/60'
+            }`}>
+            <div>
+              <span className={`font-bold ${item.owned ? 'text-rarity-advanced' : 'text-foreground'}`}>
+                {item.owned && '✓ '}{item.name}
+              </span>
+              <span className="text-muted-foreground ml-1">({item.detail})</span>
+            </div>
+            <span className={item.owned ? 'text-rarity-advanced font-bold' : 'text-muted-foreground'}>
+              {item.owned ? 'OWNED' : item.cost > 0 ? `$${item.cost}` : 'FREE'}
+            </span>
           </div>
-        </div>
-
-        {/* Horses */}
-        <div className="bg-game-slot/30 border border-game-slot-border p-2">
-          <h3 className="font-display text-[10px] font-bold text-primary mb-2">🐴 HORSES</h3>
-          <div className="space-y-1 max-h-[150px] overflow-y-auto">
-            {horseDatabase.map(h => (
-              <div key={h.id} className="flex items-center justify-between text-[9px] px-2 py-1 bg-game-slot/40 border border-game-slot-border/20">
-                <div>
-                  <span className="text-foreground font-bold">{h.name}</span>
-                  <span className="text-muted-foreground ml-1">{h.breed} · {h.rarity}</span>
-                </div>
-                <span className="text-muted-foreground">{h.value === 0 ? 'Starter' : `Not Owned · $${h.value}`}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Tack */}
-        <div className="bg-game-slot/30 border border-game-slot-border p-2">
-          <h3 className="font-display text-[10px] font-bold text-primary mb-2">🪶 TACK & HORSE GEAR</h3>
-          <div className="space-y-1 max-h-[120px] overflow-y-auto">
-            {tackDatabase.map(t => (
-              <div key={t.id} className="flex items-center justify-between text-[9px] px-2 py-1 bg-game-slot/40 border border-game-slot-border/20">
-                <span className="text-foreground font-bold">{t.name}</span>
-                <span className="text-muted-foreground">Not Owned · ${t.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );

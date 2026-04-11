@@ -2,7 +2,7 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { GameProvider, useGame } from '@/context/GameContext';
 import { TopMenuBar } from '@/components/game/TopMenuBar';
 import { CharacterSection } from '@/components/game/CharacterSection';
-import { InventoryBag } from '@/components/game/InventoryBag';
+// InventoryBag now only used in InventorySection
 import { InventorySection } from '@/components/game/InventorySection';
 import { WorldMap } from '@/components/game/WorldMap';
 import { LoginPage } from '@/pages/Login';
@@ -47,13 +47,7 @@ function GameContent() {
         <TopMenuBar />
         <div className="flex gap-6 items-start">
           {state.activeTab === 'CHARACTER' && (
-            <>
-              <CharacterSection onDeleteCharacter={handleDeleteCharacter} />
-              <div className="flex gap-4">
-                <InventoryBag bagId="bag-left" title="Left Saddlebag" />
-                <InventoryBag bagId="bag-right" title="Right Saddlebag" />
-              </div>
-            </>
+            <CharacterSection onDeleteCharacter={handleDeleteCharacter} />
           )}
           {state.activeTab === 'INVENTORY' && <InventorySection />}
           {state.activeTab === 'MAPS' && <WorldMap />}
