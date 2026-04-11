@@ -17,14 +17,14 @@ export interface CharacterOption {
 }
 
 export const characters: CharacterOption[] = [
-  { id: 'male-0', name: 'Gunslinger', gender: 'male', img: maleDefault },
-  { id: 'male-1', name: 'Old Outlaw', gender: 'male', img: male1 },
-  { id: 'male-2', name: 'Young Sheriff', gender: 'male', img: male2 },
-  { id: 'male-3', name: 'Frontier Tracker', gender: 'male', img: male3 },
-  { id: 'male-4', name: 'The Gambler', gender: 'male', img: male4 },
-  { id: 'female-0', name: 'Bounty Hunter', gender: 'female', img: femaleDefault },
-  { id: 'female-1', name: 'Saloon Rose', gender: 'female', img: female1 },
-  { id: 'female-2', name: 'Spirit Walker', gender: 'female', img: female2 },
-  { id: 'female-3', name: 'Shadow Bandit', gender: 'female', img: female3 },
+  { id: 'male-0', name: 'Bounty Hunter', gender: 'male', img: maleDefault },
+  { id: 'male-1', name: 'Gambler', gender: 'male', img: male1 },
+  { id: 'male-2', name: 'Foreman', gender: 'male', img: male2 },
+  { id: 'male-3', name: 'Tinkerer', gender: 'male', img: male3 },
+  { id: 'male-4', name: 'Deputy', gender: 'male', img: male4 },
+  { id: 'female-0', name: 'Scout', gender: 'female', img: femaleDefault },
+  { id: 'female-1', name: 'Saloon Owner', gender: 'female', img: female1 },
+  { id: 'female-2', name: 'Horse Trainer', gender: 'female', img: female2 },
+  { id: 'female-3', name: 'Healer', gender: 'female', img: female3 },
   { id: 'female-4', name: 'Ranch Hand', gender: 'female', img: female4 },
 ];

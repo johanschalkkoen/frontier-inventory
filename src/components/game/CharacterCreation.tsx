@@ -15,8 +15,9 @@ interface CharacterCreationProps {
 export function CharacterCreation({ onComplete }: CharacterCreationProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [characterName, setCharacterName] = useState('');
-  const [selectedArchetype, setSelectedArchetype] = useState(archetypes[0].id);
-  const [selectedPortrait, setSelectedPortrait] = useState(characters[0].id);
+  const [selectedGender, setSelectedGender] = useState<'male' | 'female'>('male');
+  const [selectedArchetype, setSelectedArchetype] = useState(archetypes.find(a => a.gender === 'male')!.id);
+  const [selectedPortrait, setSelectedPortrait] = useState(characters.find(c => c.gender === 'male')!.id);
   const [traitPoints, setTraitPoints] = useState<Record<TraitCategory, number>>(
     Object.fromEntries(TRAIT_CATEGORIES.map(t => [t, 0])) as Record<TraitCategory, number>
   );
@@ -26,19 +27,23 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
   const pointsUsed = Object.values(traitPoints).reduce((s, v) => s + v, 0);
   const pointsLeft = TOTAL_TRAIT_POINTS - pointsUsed;
 
-  // Filter portraits by archetype gender
-  const availablePortraits = useMemo(() =>
-    characters.filter(c => c.gender === archetype.gender),
-    [archetype.gender]
+  // Filter portraits and archetypes by selected gender
+  const genderPortraits = useMemo(() =>
+    characters.filter(c => c.gender === selectedGender),
+    [selectedGender]
   );
 
-  // When archetype changes, auto-select a matching portrait
-  const handleArchetypeChange = (id: string) => {
-    setSelectedArchetype(id);
-    const arch = archetypes.find(a => a.id === id)!;
-    const matchingPortraits = characters.filter(c => c.gender === arch.gender);
-    const defaultP = matchingPortraits.find(c => c.id === arch.defaultPortrait) || matchingPortraits[0];
-    setSelectedPortrait(defaultP.id);
+  const genderArchetypes = useMemo(() =>
+    archetypes.filter(a => a.gender === selectedGender),
+    [selectedGender]
+  );
+
+  const handleGenderChange = (gender: 'male' | 'female') => {
+    setSelectedGender(gender);
+    const firstPortrait = characters.find(c => c.gender === gender);
+    const firstArchetype = archetypes.find(a => a.gender === gender);
+    if (firstPortrait) setSelectedPortrait(firstPortrait.id);
+    if (firstArchetype) setSelectedArchetype(firstArchetype.id);
   };
 
   const adjustTrait = (trait: TraitCategory, delta: number) => {
@@ -96,7 +101,34 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
               <span className="text-[9px] text-muted-foreground mt-1 block">{characterName.length}/24</span>
             </div>
 
-            {/* Portrait Picker */}
+            {/* Gender Selector */}
+            <div>
+              <label className="block text-accent font-display font-bold text-sm mb-2">GENDER</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleGenderChange('male')}
+                  className={`flex-1 py-2.5 text-sm font-bold font-display border-2 transition-all ${
+                    selectedGender === 'male'
+                      ? 'bg-primary border-accent text-primary-foreground'
+                      : 'bg-game-slot-border border-game-slot text-foreground hover:bg-secondary'
+                  }`}
+                >
+                  ♂ MALE
+                </button>
+                <button
+                  onClick={() => handleGenderChange('female')}
+                  className={`flex-1 py-2.5 text-sm font-bold font-display border-2 transition-all ${
+                    selectedGender === 'female'
+                      ? 'bg-primary border-accent text-primary-foreground'
+                      : 'bg-game-slot-border border-game-slot text-foreground hover:bg-secondary'
+                  }`}
+                >
+                  ♀ FEMALE
+                </button>
+              </div>
+            </div>
+
+            {/* Portrait Picker - filtered by gender */}
             <div>
               <label className="block text-accent font-display font-bold text-sm mb-2">CHOOSE YOUR LOOK</label>
               <div className="flex gap-4 items-center justify-center">
@@ -105,11 +137,11 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
                 </div>
               </div>
               <div className="flex justify-center gap-2 mt-3 flex-wrap">
-                {characters.map(c => (
+                {genderPortraits.map(c => (
                   <button
                     key={c.id}
                     onClick={() => setSelectedPortrait(c.id)}
-                    className={`w-10 h-10 border-2 overflow-hidden transition-all ${
+                    className={`w-12 h-12 border-2 overflow-hidden transition-all ${
                       c.id === selectedPortrait
                         ? 'border-accent shadow-[0_0_8px_hsl(var(--game-gold)/0.5)]'
                         : 'border-game-slot-border opacity-60 hover:opacity-100'
@@ -125,12 +157,14 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
 
         {step === 2 && (
           <div className="space-y-4">
-            <label className="block text-accent font-display font-bold text-sm mb-2">CHOOSE YOUR ARCHETYPE</label>
+            <label className="block text-accent font-display font-bold text-sm mb-2">
+              CHOOSE YOUR ARCHETYPE ({selectedGender === 'male' ? 'MALE' : 'FEMALE'})
+            </label>
             <div className="grid grid-cols-2 gap-3">
-              {archetypes.map(a => (
+              {genderArchetypes.map(a => (
                 <button
                   key={a.id}
-                  onClick={() => handleArchetypeChange(a.id)}
+                  onClick={() => setSelectedArchetype(a.id)}
                   className={`text-left p-3 border-2 transition-all ${
                     a.id === selectedArchetype
                       ? 'border-accent bg-game-slot shadow-[0_0_12px_hsl(var(--game-gold)/0.3)]'
@@ -224,6 +258,8 @@ export function CharacterCreation({ onComplete }: CharacterCreationProps) {
               <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px]">
                 <span className="text-muted-foreground">Name:</span>
                 <span className="text-foreground font-bold">{characterName}</span>
+                <span className="text-muted-foreground">Gender:</span>
+                <span className="text-foreground font-bold">{selectedGender === 'male' ? 'Male' : 'Female'}</span>
                 <span className="text-muted-foreground">Archetype:</span>
                 <span className="text-foreground font-bold">{archetype.title}</span>
                 <span className="text-muted-foreground">Traits:</span>
