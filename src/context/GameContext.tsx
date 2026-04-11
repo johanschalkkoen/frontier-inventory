@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import { type GameItem, type SlotType, itemDatabase, STANDARD_STATS } from '@/data/gameData';
+import { getLevelFromXp, mapRegions, type Mission } from '@/data/mapData';
 
 interface ItemLocation {
   area: 'bag-left' | 'bag-right' | 'equipped';
@@ -12,6 +13,9 @@ interface GameState {
   activeTab: string;
   itemLocations: Record<string, ItemLocation>;
   walletAmount: number;
+  totalXp: number;
+  completedMissions: string[];
+  selectedRegionId: string | null;
 }
 
 interface GameContextType {
@@ -27,6 +31,10 @@ interface GameContextType {
   getCalculatedStats: () => Record<string, number>;
   getCoinTotal: () => number;
   getBagCount: (bag: 'bag-left' | 'bag-right') => number;
+  getPlayerLevel: () => { level: number; currentXp: number; xpToNext: number };
+  completeMission: (missionId: string) => void;
+  setSelectedRegion: (regionId: string | null) => void;
+  isMissionCompleted: (missionId: string) => boolean;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -43,15 +51,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
     itemDatabase.forEach((item, i) => {
       locations[item.id] = { area: i < 20 ? 'bag-left' : 'bag-right' };
     });
-    return { gender: 'male', selectedCharacterId: 'male-0', activeTab: 'CHARACTER', itemLocations: locations, walletAmount: 1250 };
+    return {
+      gender: 'male',
+      selectedCharacterId: 'male-0',
+      activeTab: 'CHARACTER',
+      itemLocations: locations,
+      walletAmount: 1250,
+      totalXp: 0,
+      completedMissions: [],
+      selectedRegionId: null,
+    };
   });
 
   const setGender = useCallback((g: 'male' | 'female') => {
-    setState(s => ({
-      ...s,
-      gender: g,
-      selectedCharacterId: g === 'male' ? 'male-0' : 'female-0',
-    }));
+    setState(s => ({ ...s, gender: g, selectedCharacterId: g === 'male' ? 'male-0' : 'female-0' }));
   }, []);
 
   const setSelectedCharacter = useCallback((id: string) => {
@@ -98,7 +111,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [state.itemLocations]);
 
   const getCalculatedStats = useCallback(() => {
+    const playerLevel = getLevelFromXp(state.totalXp);
     const current = { ...STANDARD_STATS };
+    // Level bonuses: +2 to each base stat per level
+    for (const key of Object.keys(current)) {
+      current[key] += (playerLevel.level - 1) * 2;
+    }
     itemDatabase.forEach(item => {
       const loc = state.itemLocations[item.id];
       if (loc?.area === 'equipped') {
@@ -108,7 +126,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     });
     return current;
-  }, [state.itemLocations]);
+  }, [state.itemLocations, state.totalXp]);
 
   const getCoinTotal = useCallback(() => {
     return itemDatabase.reduce((sum, item) => sum + item.value, 0);
@@ -118,10 +136,42 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return Object.values(state.itemLocations).filter(loc => loc.area === bag).length;
   }, [state.itemLocations]);
 
+  const getPlayerLevel = useCallback(() => {
+    return getLevelFromXp(state.totalXp);
+  }, [state.totalXp]);
+
+  const completeMission = useCallback((missionId: string) => {
+    setState(s => {
+      if (s.completedMissions.includes(missionId)) return s;
+      // Find the mission to get rewards
+      let mission: Mission | undefined;
+      for (const region of mapRegions) {
+        mission = region.missions.find(m => m.id === missionId);
+        if (mission) break;
+      }
+      if (!mission) return s;
+      return {
+        ...s,
+        completedMissions: [...s.completedMissions, missionId],
+        totalXp: s.totalXp + mission.xpReward,
+        walletAmount: s.walletAmount + mission.coinReward,
+      };
+    });
+  }, []);
+
+  const setSelectedRegion = useCallback((regionId: string | null) => {
+    setState(s => ({ ...s, selectedRegionId: regionId }));
+  }, []);
+
+  const isMissionCompleted = useCallback((missionId: string) => {
+    return state.completedMissions.includes(missionId);
+  }, [state.completedMissions]);
+
   return (
     <GameContext.Provider value={{
       state, setGender, setSelectedCharacter, setActiveTab, equipItem, unequipItem, moveItem,
-      getItemsInLocation, getEquippedItem, getCalculatedStats, getCoinTotal, getBagCount
+      getItemsInLocation, getEquippedItem, getCalculatedStats, getCoinTotal, getBagCount,
+      getPlayerLevel, completeMission, setSelectedRegion, isMissionCompleted,
     }}>
       {children}
     </GameContext.Provider>

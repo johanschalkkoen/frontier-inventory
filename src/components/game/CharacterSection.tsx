@@ -5,7 +5,6 @@ import { STANDARD_STATS, type SlotType } from '@/data/gameData';
 import { characters } from '@/data/characters';
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { PaperDoll } from './PaperDoll';
 
 const leftSlots: { type: SlotType; label: string }[] = [
   { type: 'hat', label: 'Hat' }, { type: 'bandana', label: 'Mask' },
@@ -21,9 +20,10 @@ const accessorySlots: { type: SlotType; label: string }[] = [
 ];
 
 export function CharacterSection() {
-  const { state, setGender, setSelectedCharacter, getCalculatedStats, getCoinTotal } = useGame();
+  const { state, setGender, setSelectedCharacter, getCalculatedStats, getCoinTotal, getPlayerLevel } = useGame();
   const stats = getCalculatedStats();
   const coinTotal = getCoinTotal();
+  const { level, currentXp, xpToNext } = getPlayerLevel();
 
   const [tooltip, setTooltip] = useState<{ x: number; y: number; name: string; value: number } | null>(null);
   const onHover = (e: React.MouseEvent, name: string, value: number) => setTooltip({ x: e.clientX, y: e.clientY, name, value });
@@ -45,11 +45,27 @@ export function CharacterSection() {
     { label: 'SLEEP', key: 'sleep', colorClass: 'bg-bar-sleep' },
   ];
 
+  const xpPct = xpToNext > 0 ? (currentXp / xpToNext) * 100 : 0;
+
   return (
     <div className="w-[360px] flex-shrink-0">
-      <h1 className="font-display text-2xl font-black text-accent tracking-wider text-center mb-3 drop-shadow-[2px_2px_0px_rgba(0,0,0,0.8)]">
+      <h1 className="font-display text-2xl font-black text-accent tracking-wider text-center mb-1 drop-shadow-[2px_2px_0px_rgba(0,0,0,0.8)]">
         Frontier Legend
       </h1>
+
+      {/* Level & XP Bar */}
+      <div className="mb-3 bg-game-slot/50 p-2 border border-game-slot-border">
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-accent font-display font-bold text-sm">LEVEL {level}</span>
+          <span className="text-[9px] text-muted-foreground">{currentXp} / {xpToNext} XP</span>
+        </div>
+        <div className="h-3 bg-game-slot border border-game-slot-border rounded-sm overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-accent to-primary transition-all duration-500"
+            style={{ width: `${xpPct}%` }}
+          />
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 gap-2 mb-3">
         {barConfigs.map(b => (
@@ -73,16 +89,16 @@ export function CharacterSection() {
           {leftSlots.map(s => <EquipSlot key={s.type} slotType={s.type} label={s.label} onHover={onHover} onLeave={onLeave} />)}
         </div>
 
-        {/* Character sprite with arrows */}
         <div className="flex flex-col items-center gap-1">
-          <div className="relative">
-            <PaperDoll />
+          <div className="relative w-[155px] h-[344px] bg-game-slot border-2 border-game-slot overflow-hidden">
+            <img src={currentChar.img} alt={currentChar.name}
+                 className="w-full h-full object-cover" width={155} height={344} />
             <button onClick={() => cycleChar(-1)}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-game-slot/80 hover:bg-primary/80 p-0.5 transition-colors">
+              className="absolute left-0 top-1/2 -translate-y-1/2 bg-game-slot/80 hover:bg-primary/80 p-0.5 transition-colors">
               <ChevronLeft className="w-4 h-4 text-accent" />
             </button>
             <button onClick={() => cycleChar(1)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-game-slot/80 hover:bg-primary/80 p-0.5 transition-colors">
+              className="absolute right-0 top-1/2 -translate-y-1/2 bg-game-slot/80 hover:bg-primary/80 p-0.5 transition-colors">
               <ChevronRight className="w-4 h-4 text-accent" />
             </button>
           </div>
@@ -121,7 +137,7 @@ export function CharacterSection() {
             <div key={k} className="grid grid-cols-[2fr_1fr_1fr] text-[10px] py-0.5">
               <span>{k.toUpperCase()}</span>
               <span>{base}</span>
-              <span className={v > base ? 'text-rarity-advanced font-bold' : ''}>{v}</span>
+              <span className={v > base ? 'text-rarity-advanced font-bold' : v < base ? 'text-destructive font-bold' : ''}>{v}</span>
             </div>
           );
         })}
