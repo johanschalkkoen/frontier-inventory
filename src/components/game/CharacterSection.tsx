@@ -154,7 +154,7 @@ export function CharacterSection() {
             })}
           </div>
           <div className="mt-2 pt-2 border-t border-game-slot-border flex justify-between text-accent font-bold text-xs">
-            <span>💰 WALLET:</span>
+            <span>$ WALLET:</span>
             <span>${coinTotal.toFixed(2)}</span>
           </div>
         </div>

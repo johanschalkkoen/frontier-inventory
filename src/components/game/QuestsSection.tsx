@@ -164,7 +164,7 @@ export function QuestsSection() {
                   <span className="text-accent text-[9px] block">+{m.xpReward} XP · ${m.coinReward}</span>
                   <span className="text-[8px] text-muted-foreground">⚡-{risk.energyCost} energy</span>
                   {locked ? (
-                    <span className="text-[8px] text-muted-foreground block">🔒 LVL {m.levelRequired}</span>
+                    <span className="text-[8px] text-muted-foreground block">▣ LVL {m.levelRequired}</span>
                   ) : hasActiveQuest ? (
                     <span className="text-[8px] text-muted-foreground block">ON QUEST</span>
                   ) : !reqCheck.met ? (

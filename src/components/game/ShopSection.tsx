@@ -79,7 +79,7 @@ export function ShopSection() {
     <div className="flex-1 flex gap-4">
       <div className="w-[320px] flex-shrink-0">
         <h2 className="font-display text-xl font-bold text-accent mb-2 drop-shadow-[2px_2px_0px_rgba(0,0,0,0.8)]">
-          🏪 {shop.name.toUpperCase()}
+          ⊞ {shop.name.toUpperCase()}
         </h2>
 
         {/* Shop selector */}
@@ -105,7 +105,7 @@ export function ShopSection() {
                   ? tab === 'Sell' ? 'bg-destructive text-destructive-foreground border-destructive' : 'bg-primary text-primary-foreground border-accent'
                   : 'bg-game-slot-border text-foreground border-game-slot hover:bg-secondary'
               }`}>
-              {tab === 'Sell' ? '💰 SELL ITEMS' : '🛒 BUY GOODS'}
+              {tab === 'Sell' ? '$ SELL ITEMS' : '⊞ BUY GOODS'}
             </button>
           ))}
         </div>
@@ -160,7 +160,7 @@ export function ShopSection() {
         </div>
 
         <div className="mt-2 flex justify-between text-xs text-accent font-bold bg-game-slot p-2 border border-game-slot-border">
-          <span>💰 WALLET:</span>
+          <span>$ WALLET:</span>
           <span>${state.walletAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
         </div>
         <div className="mt-1 text-[8px] text-muted-foreground">
@@ -184,7 +184,7 @@ export function ShopSection() {
           )
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-            <span className="text-4xl mb-3">🏪</span>
+            <span className="text-4xl mb-3 font-display">⊞</span>
             <p className="text-sm font-display">Select an item to inspect</p>
             <p className="text-[10px] mt-1">Browse the shelves, partner</p>
           </div>
@@ -271,14 +271,14 @@ function ItemDetail({ item, mode, priceMultiplier = 1, sellRate = 0.5, onAction,
         {mode === 'sell' ? (
           <button onClick={() => onAction(item)}
             className="px-6 py-2.5 bg-destructive text-destructive-foreground font-display font-bold text-sm hover:bg-destructive/80 transition-all active:scale-95">
-            💰 SELL
+            $ SELL
           </button>
         ) : owned ? (
           <span className="text-rarity-advanced font-bold text-sm border border-rarity-advanced px-3 py-1.5">✓ OWNED</span>
         ) : (
           <button onClick={() => onAction(item)} disabled={!canAfford}
             className="px-6 py-2.5 bg-accent text-accent-foreground font-display font-bold text-sm hover:bg-primary transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed">
-            {!canAfford ? '💸 CANT AFFORD' : price === 0 ? '🤝 CLAIM' : '🛒 BUY'}
+            {!canAfford ? '— CANT AFFORD' : price === 0 ? '— CLAIM' : '⊞ BUY'}
           </button>
         )}
       </div>
@@ -391,7 +391,7 @@ function PropertyDetail({ itemId, playerLevel, wallet }: { itemId: string; playe
       </div>
       <p className="text-foreground text-xs mb-3">{prop.description}</p>
       {prop.monthlyIncome > 0 && (
-        <div className="mb-2 text-rarity-advanced text-[10px] font-bold">💰 Monthly Income: ${prop.monthlyIncome}</div>
+        <div className="mb-2 text-rarity-advanced text-[10px] font-bold">$ Monthly Income: ${prop.monthlyIncome}</div>
       )}
       <div className="mb-3">
         <span className="text-[9px] text-primary font-bold">PERKS:</span>

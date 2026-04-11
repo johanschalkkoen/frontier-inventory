@@ -44,7 +44,7 @@ export function PropertySection() {
                   <p className="text-[10px] text-foreground/70 mb-2">{prop.description}</p>
                   <div className="flex gap-4 text-[9px]">
                     <span className="text-primary">📍 Type: {prop.type}</span>
-                    <span className="text-accent">💰 Value: ${prop.cost}</span>
+                    <span className="text-accent">$ Value: ${prop.cost}</span>
                   </div>
                 </div>
               </div>
