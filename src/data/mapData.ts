@@ -39,6 +39,7 @@ export interface Mission {
   name: string;
   description: string;
   type: 'Combat' | 'Escort' | 'Delivery' | 'Investigation' | 'Bounty' | 'Survival' | 'Heist';
+  morality?: 'good' | 'bad' | 'neutral';
   xpReward: number;
   coinReward: number;
   levelRequired: number;
@@ -46,6 +47,7 @@ export interface Mission {
   durationMinutes: number;
   requirements?: MissionRequirement[];
   encounters?: MissionEncounter[];
+  lootHint?: string; // Possible loot description shown to player
 }
 
 function genEncounters(level: number, count: number): MissionEncounter[] {
@@ -100,10 +102,13 @@ export const mapRegions: MapRegion[] = [
     levelRequired: 1, x: 50, y: 90, dangerLevel: 'Low', terrain: 'Town',
     digSpots: genDigSpots('dusty-gulch', 1, 2),
     missions: [
-      { id: 'm1', name: 'Bar Brawl', description: 'Break up a fight at the saloon.', type: 'Combat', xpReward: 50, coinReward: 10, levelRequired: 1, completed: false, durationMinutes: 1, encounters: [{ type: 'bandits', name: 'Drunk Cowboys', difficulty: 1, description: 'Rowdy drunks throw punches!' }] },
-      { id: 'm2', name: 'Missing Horse', description: 'Track down the sheriff\'s stolen stallion.', type: 'Investigation', xpReward: 75, coinReward: 15, levelRequired: 1, completed: false, durationMinutes: 2, requirements: [{ itemName: 'Rope' }] },
-      { id: 'm3', name: 'Mail Run', description: 'Deliver a letter to the next town.', type: 'Delivery', xpReward: 40, coinReward: 8, levelRequired: 1, completed: false, durationMinutes: 1 },
-      { id: 'm3b', name: 'Rat Catcher', description: 'Clear vermin from the general store cellar.', type: 'Combat', xpReward: 30, coinReward: 5, levelRequired: 1, completed: false, durationMinutes: 1 },
+      { id: 'm1', name: 'Bar Brawl', description: 'Break up a fight at the saloon.', type: 'Combat', morality: 'good', xpReward: 50, coinReward: 10, levelRequired: 1, completed: false, durationMinutes: 1, lootHint: 'Basic gear', encounters: [{ type: 'bandits', name: 'Drunk Cowboys', difficulty: 1, description: 'Rowdy drunks throw punches!' }] },
+      { id: 'm2', name: 'Missing Horse', description: 'Track down the sheriff\'s stolen stallion.', type: 'Investigation', morality: 'good', xpReward: 75, coinReward: 15, levelRequired: 1, completed: false, durationMinutes: 2, lootHint: 'Rope or provisions', requirements: [{ itemName: 'Rope' }] },
+      { id: 'm3', name: 'Mail Run', description: 'Deliver a letter to the next town.', type: 'Delivery', morality: 'good', xpReward: 40, coinReward: 8, levelRequired: 1, completed: false, durationMinutes: 1, lootHint: 'Small supplies' },
+      { id: 'm3b', name: 'Rat Catcher', description: 'Clear vermin from the general store cellar.', type: 'Combat', morality: 'good', xpReward: 30, coinReward: 5, levelRequired: 1, completed: false, durationMinutes: 1, lootHint: 'Food or small items' },
+      // BAD quests
+      { id: 'mb1', name: 'Pocket Picking', description: 'Lift wallets from distracted townsfolk at the saloon.', type: 'Heist', morality: 'bad', xpReward: 40, coinReward: 18, levelRequired: 1, completed: false, durationMinutes: 1, lootHint: 'Coins and trinkets' },
+      { id: 'mb2', name: 'Steal the Sheriff\'s Horse', description: 'The sheriff\'s prize stallion would fetch a fine price.', type: 'Heist', morality: 'bad', xpReward: 65, coinReward: 30, levelRequired: 2, completed: false, durationMinutes: 2, lootHint: 'Saddle or tack', encounters: genEncounters(2, 1) },
     ],
   },
   {
@@ -111,9 +116,10 @@ export const mapRegions: MapRegion[] = [
     levelRequired: 2, x: 28, y: 82, dangerLevel: 'Low', terrain: 'Plains',
     digSpots: genDigSpots('coyote-flats', 2, 2),
     missions: [
-      { id: 'm4', name: 'Coyote Hunt', description: 'Clear out coyotes threatening the ranch.', type: 'Combat', xpReward: 80, coinReward: 20, levelRequired: 2, completed: false, durationMinutes: 2, encounters: genEncounters(2, 1) },
-      { id: 'm5', name: 'Escort the Wagon', description: 'Guide a supply wagon safely through the flats.', type: 'Escort', xpReward: 100, coinReward: 25, levelRequired: 2, completed: false, durationMinutes: 3, requirements: [{ itemName: 'Sidearm' }] },
-      { id: 'm6', name: 'Rustler\'s Trail', description: 'Investigate cattle rustlers operating nearby.', type: 'Investigation', xpReward: 90, coinReward: 18, levelRequired: 3, completed: false, durationMinutes: 2, encounters: genEncounters(3, 1) },
+      { id: 'm4', name: 'Coyote Hunt', description: 'Clear out coyotes threatening the ranch.', type: 'Combat', morality: 'good', xpReward: 80, coinReward: 20, levelRequired: 2, completed: false, durationMinutes: 2, lootHint: 'Hides or ammo', encounters: genEncounters(2, 1) },
+      { id: 'm5', name: 'Escort the Wagon', description: 'Guide a supply wagon safely through the flats.', type: 'Escort', morality: 'good', xpReward: 100, coinReward: 25, levelRequired: 2, completed: false, durationMinutes: 3, lootHint: 'Supplies or weapons', requirements: [{ itemName: 'Sidearm' }] },
+      { id: 'm6', name: 'Rustler\'s Trail', description: 'Investigate cattle rustlers operating nearby.', type: 'Investigation', morality: 'good', xpReward: 90, coinReward: 18, levelRequired: 3, completed: false, durationMinutes: 2, encounters: genEncounters(3, 1) },
+      { id: 'mb3', name: 'Cattle Rustling', description: 'Steal cattle from the Jenkins ranch under cover of night.', type: 'Heist', morality: 'bad', xpReward: 85, coinReward: 40, levelRequired: 2, completed: false, durationMinutes: 3, lootHint: 'Cattle money', encounters: genEncounters(2, 1) },
     ],
   },
   {
@@ -121,9 +127,11 @@ export const mapRegions: MapRegion[] = [
     levelRequired: 3, x: 72, y: 78, dangerLevel: 'Medium', terrain: 'Canyon',
     digSpots: genDigSpots('red-mesa-canyon', 3, 3),
     missions: [
-      { id: 'm7', name: 'Canyon Ambush', description: 'Survive an ambush in the narrow pass.', type: 'Combat', xpReward: 120, coinReward: 30, levelRequired: 3, completed: false, durationMinutes: 3, encounters: genEncounters(3, 2) },
-      { id: 'm8', name: 'Dynamite Delivery', description: 'Bring explosives to the mining camp.', type: 'Delivery', xpReward: 100, coinReward: 35, levelRequired: 3, completed: false, durationMinutes: 2, requirements: [{ itemName: 'Canteen' }] },
-      { id: 'm9', name: 'Bounty: Red Mesa Marauder', description: 'Capture the outlaw hiding in the canyon.', type: 'Bounty', xpReward: 150, coinReward: 50, levelRequired: 4, completed: false, durationMinutes: 4, encounters: genEncounters(4, 2), requirements: [{ itemName: 'Sidearm' }] },
+      { id: 'm7', name: 'Canyon Ambush', description: 'Survive an ambush in the narrow pass.', type: 'Combat', morality: 'neutral', xpReward: 120, coinReward: 30, levelRequired: 3, completed: false, durationMinutes: 3, lootHint: 'Bandit gear', encounters: genEncounters(3, 2) },
+      { id: 'm8', name: 'Dynamite Delivery', description: 'Bring explosives to the mining camp.', type: 'Delivery', morality: 'good', xpReward: 100, coinReward: 35, levelRequired: 3, completed: false, durationMinutes: 2, requirements: [{ itemName: 'Canteen' }] },
+      { id: 'm9', name: 'Bounty: Red Mesa Marauder', description: 'Capture the outlaw hiding in the canyon.', type: 'Bounty', morality: 'good', xpReward: 150, coinReward: 50, levelRequired: 4, completed: false, durationMinutes: 4, lootHint: 'Bounty reward + weapons', encounters: genEncounters(4, 2), requirements: [{ itemName: 'Sidearm' }] },
+      { id: 'mb4', name: 'Highway Robbery', description: 'Hold up a stagecoach in the canyon narrows.', type: 'Heist', morality: 'bad', xpReward: 130, coinReward: 65, levelRequired: 3, completed: false, durationMinutes: 3, lootHint: 'Valuables and coins', encounters: genEncounters(3, 2) },
+      { id: 'mb5', name: 'Ambush the Miners', description: 'Rob miners returning from the Silver Creek claim.', type: 'Combat', morality: 'bad', xpReward: 110, coinReward: 55, levelRequired: 4, completed: false, durationMinutes: 3, lootHint: 'Silver or gold', encounters: genEncounters(4, 2) },
     ],
   },
   {

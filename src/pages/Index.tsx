@@ -7,11 +7,12 @@ import { WorldMap } from '@/components/game/WorldMap';
 import { LoginPage } from '@/pages/Login';
 import { CharacterCreation } from '@/components/game/CharacterCreation';
 import { ShopSection } from '@/components/game/ShopSection';
-import { PropertySection } from '@/components/game/PropertySection';
 import { QuestsSection } from '@/components/game/QuestsSection';
 import { ProfileSection } from '@/components/game/ProfileSection';
 import { SettingsSection } from '@/components/game/SettingsSection';
 import { InventorySection } from '@/components/game/InventorySection';
+import { HotelSection } from '@/components/game/HotelSection';
+import { SaloonSection } from '@/components/game/SaloonSection';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { getStarterItemLocations } from '@/data/statClasses';
@@ -51,7 +52,8 @@ function GameContent() {
           {state.activeTab === 'CHARACTER' && <CharacterSection />}
           {state.activeTab === 'MAPS' && <WorldMap />}
           {state.activeTab === 'SHOP' && <ShopSection />}
-          {state.activeTab === 'PROPERTY' && <PropertySection />}
+          {state.activeTab === 'HOTEL' && <HotelSection />}
+          {state.activeTab === 'SALOON' && <SaloonSection />}
           {state.activeTab === 'QUESTS' && <QuestsSection />}
           {state.activeTab === 'INVENTORY' && <InventorySection />}
           {state.activeTab === 'PROFILE' && <ProfileSection />}
@@ -101,14 +103,13 @@ function AuthGate() {
     return (
       <CharacterCreation
         onComplete={async (data) => {
-          // Get starter item locations
           const starterItems = getStarterItemLocations();
 
           await supabase.from('player_progress').update({
             gender: data.archetypeId.startsWith('f') ? 'female' : 'male',
             selected_character_id: data.portraitId,
             total_xp: 0,
-            wallet_amount: 25, // Starting cash
+            wallet_amount: 25,
             completed_missions: [],
             item_locations: starterItems,
           }).eq('user_id', user.id);

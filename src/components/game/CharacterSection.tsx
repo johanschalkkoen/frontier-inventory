@@ -2,7 +2,7 @@ import { useGame } from '@/context/GameContext';
 import { StatusBar } from './StatusBar';
 import { EquipSlot } from './EquipSlot';
 import { InventoryBag } from './InventoryBag';
-import { STANDARD_STATS, type SlotType } from '@/data/gameData';
+import { STANDARD_STATS, type SlotType, itemDatabase } from '@/data/gameData';
 import { characters } from '@/data/characters';
 import { archetypes } from '@/data/archetypes';
 import { STAT_CLASSES } from '@/data/statClasses';
@@ -32,8 +32,8 @@ const pocketBeltSlots: { type: SlotType; label: string; icon: string }[] = [
   { type: 'pocket1', label: 'Pocket', icon: '◫' },
   { type: 'pocket2', label: 'Pocket', icon: '◫' },
   { type: 'pocket3', label: 'Pocket', icon: '◫' },
-  { type: 'belt1', label: 'Belt', icon: '⊷' },
-  { type: 'belt2', label: 'Belt', icon: '⊷' },
+  { type: 'belt1', label: 'Ammo', icon: '•' },
+  { type: 'belt2', label: 'Ammo', icon: '•' },
   { type: 'belt3', label: 'Belt', icon: '⊷' },
   { type: 'shovel', label: 'Shovel', icon: '⚒' },
   { type: 'special', label: 'Misc', icon: '⊞' },
@@ -44,7 +44,7 @@ const statIcons: Record<string, string> = {
 };
 
 export function CharacterSection() {
-  const { state, getCalculatedStats, getCoinTotal, getPlayerLevel, setActiveTab, spendStatPoint } = useGame();
+  const { state, getCalculatedStats, getCoinTotal, getPlayerLevel, setActiveTab, spendStatPoint, spendClassPoint } = useGame();
   const stats = getCalculatedStats();
   const coinTotal = getCoinTotal();
   const { level, currentXp, xpToNext } = getPlayerLevel();
@@ -57,6 +57,12 @@ export function CharacterSection() {
   const xpPct = xpToNext > 0 ? (currentXp / xpToNext) * 100 : 0;
   const archetype = archetypes.find(a => a.id === state.archetypeId);
   const statClass = STAT_CLASSES.find(sc => sc.id === state.statClassId);
+
+  // Check if player has a horse (saddle)
+  const hasHorse = itemDatabase.some(item => {
+    const loc = state.itemLocations[item.id];
+    return loc && item.name.toLowerCase().includes('saddle');
+  });
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 w-full">
@@ -95,11 +101,14 @@ export function CharacterSection() {
               <span className="text-[7px] font-bold text-foreground/70 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">{Math.round(xpPct)}%</span>
             </div>
           </div>
-          {state.unspentStatPoints > 0 && (
-            <div className="mt-1 text-center">
-              <span className="text-[9px] text-accent font-bold animate-pulse">★ {state.unspentStatPoints} stat point{state.unspentStatPoints > 1 ? 's' : ''} available!</span>
-            </div>
-          )}
+          <div className="mt-1 flex justify-between text-[9px]">
+            {state.unspentStatPoints > 0 && (
+              <span className="text-accent font-bold animate-pulse">★ {state.unspentStatPoints} stat point{state.unspentStatPoints > 1 ? 's' : ''}</span>
+            )}
+            {state.unspentClassPoints > 0 && (
+              <span className="text-rarity-legendary font-bold animate-pulse">◆ {state.unspentClassPoints} class point{state.unspentClassPoints > 1 ? 's' : ''} (every 5 levels)</span>
+            )}
+          </div>
         </div>
 
         {/* Vital Status Bars */}
@@ -113,6 +122,25 @@ export function CharacterSection() {
           <StatusBar label="HUNGER" value={state.vitals.hunger} max={100} colorClass="bg-bar-energy" icon="∞" />
           <StatusBar label="MORALE" value={state.vitals.morale} max={100} colorClass="bg-bar-health" icon="★" />
           <StatusBar label="HYGIENE" value={state.vitals.hygiene} max={100} colorClass="bg-bar-thirst" icon="◇" />
+        </div>
+
+        {/* Horse Energy */}
+        <div className="mb-3 bg-game-slot/40 p-2 border border-game-slot-border">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-primary font-display font-bold text-[10px]">⊳ HORSE</span>
+            <span className="text-[8px] text-muted-foreground">{hasHorse ? 'Saddled & Ready' : 'No Horse (on foot)'}</span>
+          </div>
+          <div className="h-3 bg-game-slot border border-game-slot-border rounded-sm overflow-hidden relative">
+            <div className="h-full transition-all duration-500" style={{
+              width: `${state.horseEnergy}%`,
+              background: state.horseEnergy > 30
+                ? 'linear-gradient(90deg, hsl(120 40% 30%), hsl(120 50% 45%))'
+                : 'linear-gradient(90deg, hsl(0 60% 35%), hsl(0 70% 50%))',
+            }} />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-[6px] font-bold text-foreground/70">{Math.round(state.horseEnergy)}% ENERGY</span>
+            </div>
+          </div>
         </div>
 
         {/* Equipment layout */}
@@ -153,7 +181,7 @@ export function CharacterSection() {
         {/* Pockets & Belt section */}
         <div className="mt-3 p-2 bg-game-slot/30 border-2 border-game-slot-border"
           style={{ borderImage: 'linear-gradient(90deg, hsl(var(--accent)/0.3), hsl(var(--primary)/0.4), hsl(var(--accent)/0.3)) 1' }}>
-          <div className="text-[8px] text-primary font-bold tracking-wider mb-1.5 text-center">POCKETS · BELT · TOOLS</div>
+          <div className="text-[8px] text-primary font-bold tracking-wider mb-1.5 text-center">POCKETS · AMMO · BELT · TOOLS</div>
           <div className="flex justify-center gap-1.5 flex-wrap">
             {pocketBeltSlots.map(s => <EquipSlot key={s.type} slotType={s.type} label={s.label} icon={s.icon} onHover={onHover} onLeave={onLeave} />)}
           </div>
@@ -165,8 +193,8 @@ export function CharacterSection() {
             style={{ borderImage: 'linear-gradient(180deg, hsl(var(--accent)/0.5), hsl(var(--primary)/0.3)) 1' }}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-[9px] text-accent font-display font-bold tracking-widest">{statClass.acronym}</span>
-              {state.unspentStatPoints > 0 && (
-                <span className="text-[8px] text-accent font-bold animate-pulse">+{state.unspentStatPoints} pts</span>
+              {state.unspentClassPoints > 0 && (
+                <span className="text-[8px] text-rarity-legendary font-bold animate-pulse">+{state.unspentClassPoints} class pts (every 5 lvls)</span>
               )}
             </div>
             <div className={`grid gap-1 ${statClass.attributes.length <= 5 ? 'grid-cols-5' : 'grid-cols-3 md:grid-cols-6'}`}>
@@ -176,9 +204,9 @@ export function CharacterSection() {
                   <span className="text-accent font-display font-bold text-sm block">{attr.icon}</span>
                   <span className="text-foreground font-bold text-base font-display">{state.statClassValues[attr.key] || 1}</span>
                   <span className="text-[5px] text-muted-foreground block">{attr.name.slice(0, 4).toUpperCase()}</span>
-                  {state.unspentStatPoints > 0 && (state.statClassValues[attr.key] || 1) < 10 && (
-                    <button onClick={() => spendStatPoint(attr.key)}
-                      className="absolute -top-1 -right-1 w-4 h-4 bg-accent text-accent-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  {state.unspentClassPoints > 0 && (state.statClassValues[attr.key] || 1) < 10 && (
+                    <button onClick={() => spendClassPoint(attr.key)}
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-rarity-legendary text-accent-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <Plus className="w-2.5 h-2.5" />
                     </button>
                   )}
@@ -188,22 +216,33 @@ export function CharacterSection() {
           </div>
         )}
 
-        {/* Quick Stats */}
+        {/* Quick Stats with stat point spending */}
         <div className="mt-3 bg-game-slot/60 p-2 md:p-3 border-2 border-game-slot-border"
           style={{ borderImage: 'linear-gradient(180deg, hsl(var(--accent)/0.4), hsl(var(--primary)/0.2)) 1' }}>
+          {state.unspentStatPoints > 0 && (
+            <div className="text-[8px] text-accent font-bold mb-1.5 text-center animate-pulse">
+              ★ {state.unspentStatPoints} stat point{state.unspentStatPoints > 1 ? 's' : ''} — click + to spend
+            </div>
+          )}
           <div className="grid grid-cols-5 gap-1 md:gap-1.5">
             {['damage', 'defense', 'speed', 'luck', 'charisma'].map(k => {
               const val = stats[k] || 0;
               const base = STANDARD_STATS[k] || 0;
               const isAbove = val > base;
               return (
-                <div key={k} className="bg-game-slot/80 border border-game-slot-border p-1 md:p-1.5 text-center relative overflow-hidden"
+                <div key={k} className="bg-game-slot/80 border border-game-slot-border p-1 md:p-1.5 text-center relative overflow-hidden group"
                   style={{ borderImage: isAbove ? 'linear-gradient(135deg, hsl(120 50% 45% / 0.4), transparent) 1' : undefined }}>
                   <span className="text-xs md:text-sm block mb-0.5 font-display text-primary">{statIcons[k] || '▪'}</span>
                   <span className="text-[6px] md:text-[7px] text-muted-foreground block">{k.toUpperCase()}</span>
                   <span className={`text-sm md:text-base font-bold font-display ${isAbove ? 'text-rarity-advanced' : 'text-foreground'}`}>
                     {val}
                   </span>
+                  {state.unspentStatPoints > 0 && (
+                    <button onClick={() => spendStatPoint(k)}
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-accent text-accent-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Plus className="w-2.5 h-2.5" />
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -222,6 +261,23 @@ export function CharacterSection() {
             <div className="text-center">
               <span className="text-[7px] text-muted-foreground block">BOUNTY</span>
               <span className="text-destructive font-bold text-xs">${state.justice.bounty}</span>
+            </div>
+          </div>
+
+          <div className="mt-1 pt-1 border-t border-game-slot-border grid grid-cols-3 gap-1.5">
+            <div className="text-center">
+              <span className="text-[7px] text-muted-foreground block">INFAMY</span>
+              <span className="text-foreground font-bold text-xs">{state.justice.infamy}</span>
+            </div>
+            <div className="text-center">
+              <span className="text-[7px] text-muted-foreground block">GUN REP</span>
+              <span className="text-accent font-bold text-xs">{state.justice.gunReputation}</span>
+            </div>
+            <div className="text-center">
+              <span className="text-[7px] text-muted-foreground block">LAW</span>
+              <span className={`font-bold text-xs ${state.justice.lawfulness === 'Bandit' || state.justice.lawfulness === 'Outlaw' ? 'text-destructive' : state.justice.lawfulness === 'Lawman' ? 'text-rarity-advanced' : 'text-foreground'}`}>
+                {state.justice.lawfulness}
+              </span>
             </div>
           </div>
 
