@@ -172,6 +172,9 @@ export function generateRandomName(gender: 'male' | 'female'): string {
   return `${first} ${last}`;
 }
 
+// Items that cannot be sold (indestructible / essential)
+export const UNSELLABLE_ITEMS = ['item-bedroll', 'item-canteen-starter'];
+
 // Starting equipment for new characters
 export const STARTER_EQUIPMENT: Record<string, string> = {
   'item-70': 'equipped',    // Percussion Revolver (basic sidearm)

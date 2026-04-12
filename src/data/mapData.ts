@@ -39,6 +39,7 @@ export interface Mission {
   name: string;
   description: string;
   type: 'Combat' | 'Escort' | 'Delivery' | 'Investigation' | 'Bounty' | 'Survival' | 'Heist';
+  morality?: 'good' | 'bad' | 'neutral';
   xpReward: number;
   coinReward: number;
   levelRequired: number;
@@ -46,6 +47,7 @@ export interface Mission {
   durationMinutes: number;
   requirements?: MissionRequirement[];
   encounters?: MissionEncounter[];
+  lootHint?: string; // Possible loot description shown to player
 }
 
 function genEncounters(level: number, count: number): MissionEncounter[] {
