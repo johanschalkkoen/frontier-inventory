@@ -3,14 +3,15 @@ import { UserBadge } from './UserBadge';
 import moneybagImg from '@/assets/moneybag.jpg';
 
 const tabs = [
-  { icon: '🤠', label: 'CHARACTER' },
-  { icon: '🗺️', label: 'MAPS' },
-  { icon: '📜', label: 'QUESTS' },
-  { icon: '⚔️', label: 'SHOP' },
-  { icon: '📋', label: 'PROPERTY' },
-  { icon: '📦', label: 'INVENTORY' },
-  { icon: '👤', label: 'PROFILE' },
-  { icon: '⚙️', label: 'SETTINGS' },
+  { icon: '⌐', label: 'CHARACTER' },
+  { icon: '⊞', label: 'MAPS' },
+  { icon: '≡', label: 'QUESTS' },
+  { icon: '⌁', label: 'SHOP' },
+  { icon: '⌂', label: 'HOTEL' },
+  { icon: '◉', label: 'SALOON' },
+  { icon: '◫', label: 'INVENTORY' },
+  { icon: '⊲', label: 'PROFILE' },
+  { icon: '⊕', label: 'SETTINGS' },
 ];
 
 export function TopMenuBar() {
@@ -33,7 +34,7 @@ export function TopMenuBar() {
                 : 'border border-transparent hover:border-border'
             }`}>
             <div className="flex flex-col items-center gap-0.5">
-              <span className="text-xs md:text-sm">{tab.icon}</span>
+              <span className="text-xs md:text-sm font-display text-primary">{tab.icon}</span>
               <span className={`font-display text-[6px] md:text-[9px] font-black tracking-[0.5px] md:tracking-[1.5px] ${
                 state.activeTab === tab.label ? 'text-accent drop-shadow-[1px_1px_0px_rgba(0,0,0,1)]' : 'text-muted-foreground'
               }`}>{tab.label}</span>
