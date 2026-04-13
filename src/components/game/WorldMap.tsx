@@ -109,8 +109,8 @@ export function WorldMap() {
       cumChance += loot.chance;
       if (roll <= cumChance) {
         const added = addItemToBag(loot.itemId);
-        const { itemDatabase } = require('@/data/gameData');
-        const foundItem = itemDatabase.find((i: any) => i.id === loot.itemId);
+        const foundItem = itemDatabase.find(i => i.id === loot.itemId);
+        const itemName = foundItem?.name || 'something';
         const itemName = foundItem?.name || 'something';
         if (added) {
           toast.success(`⛏️ You dug up: ${itemName}!`, { description: 'Check your saddlebags.' });
