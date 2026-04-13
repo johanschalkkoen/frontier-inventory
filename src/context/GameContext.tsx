@@ -348,14 +348,61 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const setActiveTab = useCallback((t: string) => setState(s => ({ ...s, activeTab: t })), []);
 
+  // Utility slots that accept various item types
+  const POCKET_SLOTS: SlotType[] = ['pocket1', 'pocket2', 'pocket3'];
+  const BELT_SLOTS: SlotType[] = ['belt1', 'belt2', 'belt3', 'belt4', 'belt5'];
+  const UTILITY_SLOTS: SlotType[] = [...POCKET_SLOTS, ...BELT_SLOTS, 'shovel', 'special'];
+
   const equipItem = useCallback((itemId: string) => {
     const item = itemDatabase.find(i => i.id === itemId);
     if (!item) return;
     setState(s => {
       const locs = { ...s.itemLocations };
-      const existing = Object.entries(locs).find(([, loc]) => loc.area === 'equipped' && loc.slotType === item.type);
+
+      // Determine which slot(s) this item can go into
+      let targetSlot: SlotType = item.type;
+
+      // Items whose native type is a utility slot go directly there
+      if (UTILITY_SLOTS.includes(item.type)) {
+        targetSlot = item.type;
+      }
+      // Ammo items → find first empty belt slot
+      else if (item.category === 'ammo') {
+        const emptyBelt = BELT_SLOTS.find(slot =>
+          !Object.values(locs).some(loc => loc.area === 'equipped' && loc.slotType === slot)
+        );
+        targetSlot = emptyBelt || 'belt1';
+      }
+      // Edibles (food, drink, medicine) → find first empty pocket, then belt
+      else if (['food', 'drink', 'medicine'].includes(item.category)) {
+        const emptyPocket = POCKET_SLOTS.find(slot =>
+          !Object.values(locs).some(loc => loc.area === 'equipped' && loc.slotType === slot)
+        );
+        if (emptyPocket) {
+          targetSlot = emptyPocket;
+        } else {
+          const emptyBelt = BELT_SLOTS.find(slot =>
+            !Object.values(locs).some(loc => loc.area === 'equipped' && loc.slotType === slot)
+          );
+          targetSlot = emptyBelt || 'pocket1';
+        }
+      }
+      // EDC / luxury / valuable → pockets first, then belt, then special
+      else if (['edc', 'luxury', 'valuable'].includes(item.category)) {
+        const emptyPocket = POCKET_SLOTS.find(slot =>
+          !Object.values(locs).some(loc => loc.area === 'equipped' && loc.slotType === slot)
+        );
+        if (emptyPocket) {
+          targetSlot = emptyPocket;
+        } else {
+          targetSlot = 'special';
+        }
+      }
+
+      // Swap out existing item in that slot
+      const existing = Object.entries(locs).find(([, loc]) => loc.area === 'equipped' && loc.slotType === targetSlot);
       if (existing) { locs[existing[0]] = { area: 'bag-left' }; }
-      locs[itemId] = { area: 'equipped', slotType: item.type };
+      locs[itemId] = { area: 'equipped', slotType: targetSlot };
       return { ...s, itemLocations: locs };
     });
   }, []);
