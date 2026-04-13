@@ -902,13 +902,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return state.completedMissions.includes(missionId);
   }, [state.completedMissions]);
 
+  const addItemToBag = useCallback((itemId: string): boolean => {
+    const item = itemDatabase.find(i => i.id === itemId);
+    if (!item) return false;
+    // If already in inventory, skip (no duplicates for non-stackable)
+    if (state.itemLocations[itemId] && !item.stackable) return false;
+    setState(s => ({
+      ...s,
+      itemLocations: { ...s.itemLocations, [itemId]: { area: 'bag-left' } },
+    }));
+    return true;
+  }, [state.itemLocations]);
+
   return (
     <GameContext.Provider value={{
       state, setGender, setSelectedCharacter, setActiveTab, equipItem, unequipItem, moveItem,
       getItemsInLocation, getEquippedItem, getCalculatedStats, getCoinTotal, getBagCount,
       getPlayerLevel, startMission, completeMission, setSelectedRegion, isMissionCompleted,
       buyItem, sellItem, hasItem, processEncounter, abortQuest, useHealItem, spendStatPoint,
-      spendClassPoint, restoreVital, spendMoney, refillCanteen, loaded,
+      spendClassPoint, restoreVital, spendMoney, refillCanteen, addItemToBag, loaded,
     }}>
       {children}
     </GameContext.Provider>
