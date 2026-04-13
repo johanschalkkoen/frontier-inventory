@@ -111,7 +111,6 @@ export function WorldMap() {
         const added = addItemToBag(loot.itemId);
         const foundItem = itemDatabase.find(i => i.id === loot.itemId);
         const itemName = foundItem?.name || 'something';
-        const itemName = foundItem?.name || 'something';
         if (added) {
           toast.success(`⛏️ You dug up: ${itemName}!`, { description: 'Check your saddlebags.' });
         } else {
