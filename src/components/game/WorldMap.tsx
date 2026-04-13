@@ -1,5 +1,6 @@
 import { useGame } from '@/context/GameContext';
 import { mapRegions, type DigSpot } from '@/data/mapData';
+import { itemDatabase } from '@/data/gameData';
 import { useState, useMemo } from 'react';
 import { MapPin, Lock, ChevronLeft, ZoomIn, ZoomOut, Shovel } from 'lucide-react';
 import westernMapImg from '@/assets/western-map.jpg';
