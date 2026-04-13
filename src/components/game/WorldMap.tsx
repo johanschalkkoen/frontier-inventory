@@ -68,12 +68,13 @@ const townFeatures: Record<string, { name: string; icon: string; x: number; y: n
 };
 
 export function WorldMap() {
-  const { state, getPlayerLevel, isMissionCompleted, setSelectedRegion, hasItem } = useGame();
+  const { state, getPlayerLevel, isMissionCompleted, setSelectedRegion, hasItem, addItemToBag, restoreVital } = useGame();
   const { level } = getPlayerLevel();
   const [mapLevel, setMapLevel] = useState<MapLevel>('global');
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
   const [hoveredFeature, setHoveredFeature] = useState<string | null>(null);
+  const [dugSpots, setDugSpots] = useState<Set<string>>(new Set());
 
   const selectedRegion = mapRegions.find(r => r.id === state.selectedRegionId);
   const activeQuest = state.activeQuest;
@@ -89,16 +90,38 @@ export function WorldMap() {
       toast.error(`Requires level ${spot.levelRequired}`);
       return;
     }
+    if (dugSpots.has(spot.id)) {
+      toast.info('You already dug here. Nothing left.');
+      return;
+    }
+    // Check energy
+    if ((state.vitals?.energy ?? 100) < 10) {
+      toast.error('Too exhausted to dig! Rest first.');
+      return;
+    }
+    // Deduct energy for digging
+    restoreVital('energy', -8);
+
     const roll = Math.random();
     let cumChance = 0;
     for (const loot of spot.lootTable) {
       cumChance += loot.chance;
       if (roll <= cumChance) {
-        toast.success(`You found something buried here! 🪙`);
+        const added = addItemToBag(loot.itemId);
+        const { itemDatabase } = require('@/data/gameData');
+        const foundItem = itemDatabase.find((i: any) => i.id === loot.itemId);
+        const itemName = foundItem?.name || 'something';
+        if (added) {
+          toast.success(`⛏️ You dug up: ${itemName}!`, { description: 'Check your saddlebags.' });
+        } else {
+          toast.success(`⛏️ You found: ${itemName}! (already in bag)`);
+        }
+        setDugSpots(prev => new Set(prev).add(spot.id));
         return;
       }
     }
-    toast.info('Nothing but dirt and rocks...');
+    setDugSpots(prev => new Set(prev).add(spot.id));
+    toast.info('Nothing but dirt and rocks... 🪨');
   };
 
   // ============== TOWN / LOCAL VIEW ==============
