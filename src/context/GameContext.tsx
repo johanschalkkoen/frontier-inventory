@@ -78,6 +78,7 @@ interface GameContextType {
   restoreVital: (vital: keyof VitalStats, amount: number) => void;
   spendMoney: (amount: number) => boolean;
   refillCanteen: () => void;
+  addItemToBag: (itemId: string) => boolean;
   loaded: boolean;
 }
 
